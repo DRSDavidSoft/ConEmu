@@ -234,7 +234,7 @@ enum LngResources
 	lng_ConfirmCloseBtnAll        = 203,
 	lng_ConfirmCloseBtnConsoles   = 204,
 	lng_ConfirmCloseBtnConsole    = 205,
-	lng_MenuDarkMode              = 213,
+	lng_DarkMode                  = 213,
 	// last auto-gen identifier
 	lng_NextId
 };
