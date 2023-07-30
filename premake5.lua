@@ -28,11 +28,11 @@ workspace "CE"
     defines { "WIN64", "_WIN64" }
 
   filter { "action:vs2019", "configurations:Release or Remote", "platforms:Win32" }
-    toolset "v141_xp"
+    toolset "v143"
   filter { "action:vs2019", "configurations:Debug", "platforms:Win32" }
-    toolset "v141_xp"
+    toolset "v143"
   filter "action:vs2017"
-    toolset "v141_xp"
+    toolset "v143"
   filter "action:vs2015"
     toolset "v140_xp"
   filter "action:vs2013"

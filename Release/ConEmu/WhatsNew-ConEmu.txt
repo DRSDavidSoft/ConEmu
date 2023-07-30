@@ -309,7 +309,7 @@ https://conemu.github.io/en/Whats_New.html
 
 2020.7.13
 * gh-2009: Autoload font files from ConEmuDir/ConEmuBaseDir (fix).
-* gh-2130: Use v141_xp toolset to build Release|x86.
+* gh-2130: Use v143 toolset to build Release|x86.
 * Fix 'Settings/Debug/Exec' monitoring: files weren't loaded after '@'.
 * Button 'Register ConEmu autorun' didn't work in some cases.
 * Fix console lags and size during ConEmu cmd autoattach initialization.
