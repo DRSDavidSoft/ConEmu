@@ -53,6 +53,7 @@
 #define ID_SETTINGS 0xABCD
 #define ID_ABOUT 0xABCE
 #define ID_TOTRAY 0xABCF
+#define ID_DARKMODE 0xACDE
 #define ID_DEBUGCON 0xABD0
 // VCon menu items
 #define IDM_VCONCMD_FIRST 0xABD1

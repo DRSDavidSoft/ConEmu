@@ -94,6 +94,7 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_MenuAttachTo,             L"Attach to..." },
 	{ lng_MenuAutoScroll,           L"Auto scro&ll" },
 	{ lng_MenuBringHere,            L"Bring &here" },
+	{ lng_MenuDarkMode,             L"Dark Mode" },
 	{ lng_MenuChangeAffinity,       L"A&ffinity/priority..." },
 	{ lng_MenuCheckUpdate,          L"&Check for updates" },
 	{ lng_MenuChildSysMenu,         L"Child system menu..." },

@@ -419,6 +419,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		.SetHotKey(VK_RIGHT,VK_LWIN).SetEnabled(ConEmuHotKey::UseWinMove);
 	Add(vkJumpActiveMonitor,chk_User, L"Key.JumpActiveMonitor").SetMacro(L"WindowMode(Here)")
 		;
+	Add(vkDarkMode,        chk_User, L"Key.DarkMode").SetMacro(L"DarkMode")
+		;
 	Add(vkJumpPrevMonitor,chk_User,   L"Key.JumpPrevMonitor"  ).SetMacro(L"WindowMode(MPrev)")
 		.SetHotKey(VK_LEFT,VK_LWIN,VK_SHIFT).SetEnabled(ConEmuHotKey::UseWinMove);
 	Add(vkJumpNextMonitor, chk_User,  L"Key.JumpNextMonitor"  ).SetMacro(L"WindowMode(MNext)")

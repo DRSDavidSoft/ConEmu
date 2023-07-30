@@ -394,6 +394,7 @@ static LngPredefined gsDataHints[] = {
 	{ vkGlobalRestore,         L"Restore (bring to front)" },
 	{ vkHighlightMouse,        L"Highlighting: Switch ‘Highlight row under mouse cursor’" },
 	{ vkHighlightMouseX,       L"Highlighting: Switch ‘Highlight row & col under mouse cursor’" },
+	{ vkDarkMode,              L"Perform the Win32 Dark Mode example test" },
 	{ vkJumpActiveMonitor,     L"Move ConEmu window to the monitor with mouse cursor (Bring here)" },
 	{ vkJumpNextMonitor,       L"Move ConEmu window to next monitor" },
 	{ vkJumpPrevMonitor,       L"Move ConEmu window to previous monitor" },

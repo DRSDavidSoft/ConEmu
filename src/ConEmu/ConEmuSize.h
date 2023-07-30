@@ -128,10 +128,10 @@ protected:
 	RECT mrc_StoredTiledRect = {};
 
 	POINT ptFullScreenSize = {}; // size for GetMinMaxInfo in Fullscreen mode
-	
+
 	ConEmuWindowMode WindowMode = wmNormal;           // wmNormal/wmMaximized/wmFullScreen
 	ConEmuWindowMode changeFromWindowMode = wmNotChanging; // wmNotChanging/rmNormal/rmMaximized/rmFullScreen
-	
+
 	bool isRestoreFromMinimized = false;
 	bool isWndNotFSMaximized = false; // ставится в true, если при переходе в FullScreen - был Maximized
 	bool isQuakeMinimized = false;    // изврат, для случая когда "Quake" всегда показывается на таскбаре
@@ -277,6 +277,7 @@ public:
 	void DoForcedFullScreen(bool bSet = true);
 	void DoAlwaysOnTopSwitch();
 	void DoDesktopModeSwitch();
+	void DoDarkMode();
 
 	void ReSize(bool abCorrect2Ideal = false);
 

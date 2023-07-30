@@ -382,6 +382,7 @@ enum ConEmuWindowCommand
 	cwc_NextMonitor = 10, // Same as Win+Shift+Right in Win7
 	cwc_TileWidth   = 11, // Maximize width (no analogue yet)
 	cwc_BringHere   = 12, // Jump to active monitor (Bring here)
+	cwc_DarkMode    = 13, // Start DarkMode example
 	// for comparison
 	cwc_LastCmd
 };
