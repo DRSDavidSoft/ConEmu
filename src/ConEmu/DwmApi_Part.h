@@ -86,7 +86,6 @@ typedef int (WINAPI *DTT_CALLBACK_PROC)(HDC hdc, LPWSTR pszText, int cchText, LP
                              DTT_APPLYOVERLAY | \
                              DTT_GLOWSIZE | \
                              DTT_COMPOSITED)
-
 typedef struct _DTTOPTS
 {
     DWORD             dwSize;              // size of the struct

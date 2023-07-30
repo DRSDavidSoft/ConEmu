@@ -103,6 +103,8 @@ bool IsWindows64();
 bool IsWine();
 bool IsWinPE();
 
+constexpr bool CheckBuildNumber(DWORD buildNumber);
+
 CEStr ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount);
 
 CEStr GetComspec(const ConEmuComspec* pOpt);

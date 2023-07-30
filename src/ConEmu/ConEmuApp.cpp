@@ -564,6 +564,12 @@ LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 	{
 		if (ghWndApp == nullptr)
 			ghWndApp = hWnd;
+
+		if (global::g_darkModeSupported)
+		{
+			_AllowDarkModeForWindow(hWnd, true);
+			RefreshTitleBarThemeColor(hWnd);
+		}
 	}
 	else if (messg == WM_ACTIVATEAPP)
 	{

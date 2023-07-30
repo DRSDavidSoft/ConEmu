@@ -106,6 +106,10 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 	PatchMsgBoxIcon(hDlg, messg, wParam, lParam);
 
+	constexpr COLORREF darkBkColor = 0x383838;
+	constexpr COLORREF darkTextColor = 0xFFFFFF;
+	static HBRUSH hbrBkgnd = nullptr;
+
 	switch (messg)
 	{
 		case WM_INITDIALOG:
@@ -131,6 +135,14 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			{
 				SetWindowPos(hDlg, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 			}
+
+			/*
+			if (g_darkModeSupported)
+			{
+				SetWindowTheme(GetDlgItem(hDlg, IDOK), L"Explorer", nullptr);
+				SendMessageW(hDlg, WM_THEMECHANGED, 0, 0);
+			}
+			*/
 
 			const wchar_t* pszActivePage = reinterpret_cast<LPCWSTR>(lParam);
 
@@ -255,6 +267,23 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				return FALSE;
 			}
 
+		/*
+		case WM_CTLCOLORDLG:
+		case WM_CTLCOLORSTATIC:
+			{
+				if (g_darkModeSupported && g_darkModeEnabled)
+				{
+					HDC hdc = reinterpret_cast<HDC>(wParam);
+					SetTextColor(hdc, darkTextColor);
+					SetBkColor(hdc, darkBkColor);
+					if (!hbrBkgnd)
+						hbrBkgnd = CreateSolidBrush(darkBkColor);
+					return reinterpret_cast<INT_PTR>(hbrBkgnd);
+				}
+			}
+			break;
+		*/
+
 		case WM_COMMAND:
 			switch (HIWORD(wParam))
 			{
@@ -321,8 +350,37 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			break;
 
 		case WM_DESTROY:
+			if (hbrBkgnd)
+			{
+				DeleteObject(hbrBkgnd);
+				hbrBkgnd = nullptr;
+			}
 			mh_AboutDlg = nullptr;
 			break;
+
+		/*
+		case WM_SETTINGCHANGE:
+		{
+			if (g_darkModeSupported && IsColorSchemeChangeMessage(lParam))
+				SendMessageW(hDlg, WM_THEMECHANGED, 0, 0);
+		}
+		break;
+		case WM_THEMECHANGED:
+		{
+			if (g_darkModeSupported)
+			{
+				_AllowDarkModeForWindow(hDlg, g_darkModeEnabled);
+				RefreshTitleBarThemeColor(hDlg);
+
+				HWND hButton = GetDlgItem(hDlg, IDOK);
+				_AllowDarkModeForWindow(hButton, g_darkModeEnabled);
+				SendMessageW(hButton, WM_THEMECHANGED, 0, 0);
+
+				UpdateWindow(hDlg);
+			}
+		}
+		break;
+		*/
 
 		default:
 			if (mp_DpiAware && mp_DpiAware->ProcessDpiMessages(hDlg, messg, wParam, lParam))

@@ -6490,6 +6490,16 @@ void CConEmuSize::DoFullScreen()
 		mp_ConEmu->SetWindowMode(mp_ConEmu->isWndNotFSMaximized ? wmMaximized : wmNormal);
 }
 
+void CConEmuSize::DoDarkMode()
+{
+	// if (global::g_darkModeSupported)
+	{
+		global::g_darkModeEnabled = true;
+		_AllowDarkModeForWindow(ghWndApp, true);
+		RefreshTitleBarThemeColor(ghWndApp);
+	}
+}
+
 void CConEmuSize::DoMaximizeRestore()
 {
 	// abPosted - removed, all calls was as TRUE

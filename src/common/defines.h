@@ -29,6 +29,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <SDKDDKVer.h>
+#include <windows.h>
+
+#pragma comment(lib, "Comctl32.lib")
+#pragma comment(lib, "Uxtheme.lib")
+
+#include <CommCtrl.h>
+#include <Vssym32.h>
+
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -39,6 +48,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <limits>
 #include <algorithm>
 #include <atomic>
+
+// #include <climits>
 
 #if !defined(__GNUC__) || defined(__MINGW32__)
 #pragma warning(push)
