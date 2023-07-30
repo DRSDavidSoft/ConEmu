@@ -3,7 +3,7 @@
 ###############################################################################
 * text=auto
 *.DotSettings eol=lf
-*.rc text working-tree-encoding=UTF-16LE-BOM eol=crlf
+#*.rc text working-tree-encoding=UTF-16LE-BOM eol=crlf
 
 ###############################################################################
 # Set default behavior for command prompt diff.
