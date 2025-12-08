@@ -138,7 +138,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			if (global::g_darkModeSupported)
 			{
-				SetWindowTheme(GetDlgItem(hDlg, IDOK), L"Explorer", nullptr);
+				gpConEmu->SetWindowTheme(GetDlgItem(hDlg, IDOK), L"Explorer", nullptr);
 				SendMessageW(hDlg, WM_THEMECHANGED, 0, 0);
 			}
 
