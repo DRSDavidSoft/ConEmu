@@ -13324,6 +13324,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			{
 				global::g_darkModeEnabled = _ShouldAppsUseDarkMode() && !IsHighContrast();
 				RefreshTitleBarThemeColor(ghWnd);
+				if (_FlushMenuThemes)
+					_FlushMenuThemes();
 			}
 		} break;
 
