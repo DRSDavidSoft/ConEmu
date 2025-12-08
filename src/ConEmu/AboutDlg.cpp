@@ -274,8 +274,13 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 					SetTextColor(hdc, darkTextColor);
 					SetBkColor(hdc, darkBkColor);
 					if (!hbrBkgnd)
+					{
 						hbrBkgnd = CreateSolidBrush(darkBkColor);
-					return reinterpret_cast<INT_PTR>(hbrBkgnd);
+					}
+					if (hbrBkgnd)
+					{
+						return reinterpret_cast<INT_PTR>(hbrBkgnd);
+					}
 				}
 			}
 			break;
@@ -364,6 +369,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		{
 			if (global::g_darkModeSupported)
 			{
+				// Note: g_darkModeEnabled is updated by WM_SETTINGCHANGE before this is sent
 				_AllowDarkModeForWindow(hDlg, global::g_darkModeEnabled);
 				RefreshTitleBarThemeColor(hDlg);
 
