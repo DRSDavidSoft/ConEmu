@@ -369,7 +369,8 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		{
 			if (global::g_darkModeSupported)
 			{
-				// Note: g_darkModeEnabled is updated by WM_SETTINGCHANGE before this is sent
+				// Update the dark mode state to ensure we have the current setting
+				global::g_darkModeEnabled = _ShouldAppsUseDarkMode() && !IsHighContrast();
 				_AllowDarkModeForWindow(hDlg, global::g_darkModeEnabled);
 				RefreshTitleBarThemeColor(hDlg);
 
