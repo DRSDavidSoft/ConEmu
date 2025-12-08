@@ -41,6 +41,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* *************************** */
 
+namespace global {
+	bool g_darkModeSupported = false;
+	bool g_darkModeEnabled = false;
+	DWORD g_buildNumber = 0;
+}
+
 bool AllowDarkModeForWindow(HWND hWnd, bool allow)
 {
 	if (global::g_darkModeSupported)

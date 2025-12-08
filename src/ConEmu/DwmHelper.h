@@ -107,9 +107,9 @@ struct WINDOWCOMPOSITIONATTRIBDATA
 };
 
 namespace global {
-	extern bool g_darkModeSupported = false;
-	extern bool g_darkModeEnabled = false;
-	extern DWORD g_buildNumber = 0;
+	extern bool g_darkModeSupported;
+	extern bool g_darkModeEnabled;
+	extern DWORD g_buildNumber;
 }
 
 using fnRtlGetNtVersionNumbers = void (WINAPI*)(LPDWORD major, LPDWORD minor, LPDWORD build);
