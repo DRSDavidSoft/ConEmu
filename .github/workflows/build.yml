@@ -26,4 +26,14 @@ jobs:
           msbuild src\CE.sln -m /p:platform="x64" /p:configuration="Release"
       - name: test
         run: .\Release\Tests_Release_x64.exe
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: ConEmu-x64-Release
+          path: |
+            Release/*.exe
+            Release/*.dll
+            Release/ConEmu/
+          retention-days: 90
 
