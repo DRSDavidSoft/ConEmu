@@ -139,6 +139,8 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			if (global::g_darkModeSupported)
 			{
 				gpConEmu->SetWindowTheme(GetDlgItem(hDlg, IDOK), L"Explorer", nullptr);
+				gpConEmu->SetWindowTheme(GetDlgItem(hDlg, tbAboutTabs), L"Explorer", nullptr);
+				gpConEmu->SetWindowTheme(GetDlgItem(hDlg, tAboutSearch), L"Explorer", nullptr);
 				SendMessageW(hDlg, WM_THEMECHANGED, 0, 0);
 			}
 
@@ -391,9 +393,18 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				_AllowDarkModeForWindow(hDlg, global::g_darkModeEnabled);
 				RefreshTitleBarThemeColor(hDlg);
 
+				// Apply dark theme to controls
 				HWND hButton = GetDlgItem(hDlg, IDOK);
 				_AllowDarkModeForWindow(hButton, global::g_darkModeEnabled);
 				SendMessageW(hButton, WM_THEMECHANGED, 0, 0);
+
+				HWND hTab = GetDlgItem(hDlg, tbAboutTabs);
+				_AllowDarkModeForWindow(hTab, global::g_darkModeEnabled);
+				SendMessageW(hTab, WM_THEMECHANGED, 0, 0);
+
+				HWND hEdit = GetDlgItem(hDlg, tAboutSearch);
+				_AllowDarkModeForWindow(hEdit, global::g_darkModeEnabled);
+				SendMessageW(hEdit, WM_THEMECHANGED, 0, 0);
 
 				UpdateWindow(hDlg);
 			}
