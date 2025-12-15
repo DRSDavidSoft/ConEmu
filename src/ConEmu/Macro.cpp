@@ -1097,7 +1097,6 @@ CEStr ConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 	LPCWSTR sMonitorPrev = L"MPREV";
 	LPCWSTR sMonitorNext = L"MNEXT";
 	LPCWSTR sBringHere = L"HERE";
-	LPCWSTR sDarkMode = L"DARK";
 
 	ConEmuWindowCommand Cmd = cwc_Current;
 
@@ -1173,9 +1172,6 @@ CEStr ConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 		break;
 	case cwc_BringHere:
 		gpConEmu->DoBringHere();
-		break;
-	case cwc_DarkMode:
-		gpConEmu->DoDarkMode();
 		break;
 	case cwc_Current:
 	case cwc_LastCmd:
