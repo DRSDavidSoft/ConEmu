@@ -13320,7 +13320,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				ReloadEnvironmentVariables();
 			}
 
-			if (global::g_darkModeSupported && IsColorSchemeChangeMessage(messg, lParam))
+			if (global::g_darkModeSupported && IsColorSchemeChangeMessage(lParam))
 			{
 				global::g_darkModeEnabled = _ShouldAppsUseDarkMode() && !IsHighContrast();
 				RefreshTitleBarThemeColor(ghWnd);
