@@ -277,7 +277,6 @@ public:
 	void DoForcedFullScreen(bool bSet = true);
 	void DoAlwaysOnTopSwitch();
 	void DoDesktopModeSwitch();
-	void DoDarkMode();
 
 	void ReSize(bool abCorrect2Ideal = false);
 

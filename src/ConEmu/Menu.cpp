@@ -1094,8 +1094,6 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 		}
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
 
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_DARKMODE, MenuAccel(vkDarkMode, CLngRc::getRsrc(lng_DarkMode/*"Dark Mode"*/)));
-
 		//InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_ABOUT, _T("&About / Help"));
 		if (mh_HelpPopup) DestroyMenu(mh_HelpPopup);
 		mh_HelpPopup = CreateHelpMenuPopup();
@@ -2303,12 +2301,6 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 		case ID_TOMONITOR:
 		{
 			gpConEmu->DoBringHere();
-			return 0;
-		}
-
-		case ID_DARKMODE:
-		{
-			gpConEmu->DoDarkMode();
 			return 0;
 		}
 
