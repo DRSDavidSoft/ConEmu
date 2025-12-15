@@ -239,7 +239,24 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		}
 
 		case WM_CTLCOLORSTATIC:
-			if (GetWindowLongPtr(reinterpret_cast<HWND>(lParam), GWLP_ID) == stConEmuUrl)
+		{
+			// Dark mode handling
+			if (global::g_darkModeSupported && global::g_darkModeEnabled)
+			{
+				HDC hdc = reinterpret_cast<HDC>(wParam);
+				SetTextColor(hdc, darkTextColor);
+				SetBkColor(hdc, darkBkColor);
+				if (!hbrBkgnd)
+				{
+					hbrBkgnd = CreateSolidBrush(darkBkColor);
+				}
+				if (hbrBkgnd)
+				{
+					return reinterpret_cast<INT_PTR>(hbrBkgnd);
+				}
+			}
+			// Handle URL link color (normal mode)
+			else if (GetWindowLongPtr(reinterpret_cast<HWND>(lParam), GWLP_ID) == stConEmuUrl)
 			{
 				SetTextColor(reinterpret_cast<HDC>(wParam), GetSysColor(COLOR_HOTLIGHT));
 				HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
@@ -253,6 +270,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				SetBkMode(reinterpret_cast<HDC>(wParam), TRANSPARENT);
 				return reinterpret_cast<INT_PTR>(hBrush);
 			}
+		}
 
 		case WM_SETCURSOR:
 			{
@@ -266,24 +284,23 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			}
 
 		case WM_CTLCOLORDLG:
-		case WM_CTLCOLORSTATIC:
+		{
+			// Dark mode dialog background
+			if (global::g_darkModeSupported && global::g_darkModeEnabled)
 			{
-				if (global::g_darkModeSupported && global::g_darkModeEnabled)
+				HDC hdc = reinterpret_cast<HDC>(wParam);
+				SetBkColor(hdc, darkBkColor);
+				if (!hbrBkgnd)
 				{
-					HDC hdc = reinterpret_cast<HDC>(wParam);
-					SetTextColor(hdc, darkTextColor);
-					SetBkColor(hdc, darkBkColor);
-					if (!hbrBkgnd)
-					{
-						hbrBkgnd = CreateSolidBrush(darkBkColor);
-					}
-					if (hbrBkgnd)
-					{
-						return reinterpret_cast<INT_PTR>(hbrBkgnd);
-					}
+					hbrBkgnd = CreateSolidBrush(darkBkColor);
+				}
+				if (hbrBkgnd)
+				{
+					return reinterpret_cast<INT_PTR>(hbrBkgnd);
 				}
 			}
 			break;
+		}
 
 		case WM_COMMAND:
 			switch (HIWORD(wParam))
