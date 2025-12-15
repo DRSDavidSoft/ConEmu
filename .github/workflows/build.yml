@@ -13,17 +13,25 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           submodules: true
           fetch-depth: 2
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.3.1
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+        uses: microsoft/setup-msbuild@v2
       - name: msbuild
         run: |
           msbuild src\CE.sln -m /p:platform="x64" /p:configuration="Release"
       - name: test
         run: .\Release\Tests_Release_x64.exe
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ConEmu-x64-Release
+          path: |
+            Release/*.exe
+            Release/*.dll
+            Release/ConEmu/
+          retention-days: 90
 
