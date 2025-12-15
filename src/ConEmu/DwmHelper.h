@@ -122,7 +122,7 @@ using fnFlushMenuThemes = void (WINAPI*)(); // ordinal 136
 using fnRefreshImmersiveColorPolicyState = void (WINAPI*)(); // ordinal 104
 using fnIsDarkModeAllowedForWindow = bool (WINAPI*)(HWND hWnd); // ordinal 137
 using fnGetIsImmersiveColorUsingHighContrast = bool (WINAPI*)(IMMERSIVE_HC_CACHE_MODE mode); // ordinal 106
-//using fnOpenNcThemeData = HTHEME(WINAPI*)(HWND hWnd, LPCWSTR pszClassList); // ordinal 49
+using fnOpenNcThemeData = HTHEME(WINAPI*)(HWND hWnd, LPCWSTR pszClassList); // ordinal 49
 // 1903 18362
 using fnShouldSystemUseDarkMode = bool (WINAPI*)(); // ordinal 138
 using fnSetPreferredAppMode = PreferredAppMode(WINAPI*)(PreferredAppMode appMode); // ordinal 135, in 1903
@@ -136,7 +136,7 @@ extern fnFlushMenuThemes _FlushMenuThemes;
 extern fnRefreshImmersiveColorPolicyState _RefreshImmersiveColorPolicyState;
 extern fnIsDarkModeAllowedForWindow _IsDarkModeAllowedForWindow;
 extern fnGetIsImmersiveColorUsingHighContrast _GetIsImmersiveColorUsingHighContrast;
-//extern fnOpenNcThemeData _OpenNcThemeData;
+extern fnOpenNcThemeData _OpenNcThemeData;
 // 1903 18362
 extern fnShouldSystemUseDarkMode _ShouldSystemUseDarkMode;
 extern fnSetPreferredAppMode _SetPreferredAppMode;
@@ -147,7 +147,7 @@ void RefreshTitleBarThemeColor(HWND hWnd);
 bool IsColorSchemeChangeMessage(LPARAM lParam);
 bool IsColorSchemeChangeMessage(UINT message, LPARAM lParam);
 void AllowDarkModeForApp(bool allow);
-//void FixDarkScrollBar();
+void FixDarkScrollBar();
 
 class CDwmHelper
 {

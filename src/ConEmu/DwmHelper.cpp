@@ -31,10 +31,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DwmApi_Part.h"
 #include "ConEmu.h"
 #include "Options.h"
-// #include <Uxtheme.h>
-// #include <WindowsX.h>
+#include <Uxtheme.h>
+#include <WindowsX.h>
 
-// #include "IatHook.h"
+#include "IatHook.h"
 
 
 
@@ -55,7 +55,7 @@ fnFlushMenuThemes _FlushMenuThemes = nullptr;
 fnRefreshImmersiveColorPolicyState _RefreshImmersiveColorPolicyState = nullptr;
 fnIsDarkModeAllowedForWindow _IsDarkModeAllowedForWindow = nullptr;
 fnGetIsImmersiveColorUsingHighContrast _GetIsImmersiveColorUsingHighContrast = nullptr;
-//fnOpenNcThemeData _OpenNcThemeData = nullptr;
+fnOpenNcThemeData _OpenNcThemeData = nullptr;
 fnShouldSystemUseDarkMode _ShouldSystemUseDarkMode = nullptr;
 fnSetPreferredAppMode _SetPreferredAppMode = nullptr;
 
@@ -119,33 +119,33 @@ void AllowDarkModeForApp(bool allow)
 		_SetPreferredAppMode(allow ? AllowDark : Default);
 }
 
-//void FixDarkScrollBar()
-//{
-//	HMODULE hComctl = LoadLibraryExW(L"comctl32.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-//	if (hComctl)
-//	{
-//		auto addr = FindDelayLoadThunkInModule(hComctl, "uxtheme.dll", 49); // OpenNcThemeData
-//		if (addr)
-//		{
-//			DWORD oldProtect;
-//			if (VirtualProtect(addr, sizeof(IMAGE_THUNK_DATA), PAGE_READWRITE, &oldProtect))
-//			{
-//				auto MyOpenThemeData = [](HWND hWnd, LPCWSTR classList) -> HTHEME {
-//					if (wcscmp(classList, L"ScrollBar") == 0)
-//					{
-//						hWnd = nullptr;
-//						classList = L"Explorer::ScrollBar";
-//					}
-//					return _OpenNcThemeData(hWnd, classList);
-//				};
-//
-//				addr->u1.Function = reinterpret_cast<ULONG_PTR>(static_cast<fnOpenNcThemeData>(MyOpenThemeData));
-//				VirtualProtect(addr, sizeof(IMAGE_THUNK_DATA), oldProtect, &oldProtect);
-//			}
-//		}
-//	}
-//}
-//
+void FixDarkScrollBar()
+{
+	HMODULE hComctl = LoadLibraryExW(L"comctl32.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+	if (hComctl)
+	{
+		auto addr = FindDelayLoadThunkInModule(hComctl, "uxtheme.dll", 49); // OpenNcThemeData
+		if (addr)
+		{
+			DWORD oldProtect;
+			if (VirtualProtect(addr, sizeof(IMAGE_THUNK_DATA), PAGE_READWRITE, &oldProtect))
+			{
+				auto MyOpenThemeData = [](HWND hWnd, LPCWSTR classList) -> HTHEME {
+					if (wcscmp(classList, L"ScrollBar") == 0)
+					{
+						hWnd = nullptr;
+						classList = L"Explorer::ScrollBar";
+					}
+					return _OpenNcThemeData(hWnd, classList);
+				};
+
+				addr->u1.Function = reinterpret_cast<ULONG_PTR>(static_cast<fnOpenNcThemeData>(MyOpenThemeData));
+				VirtualProtect(addr, sizeof(IMAGE_THUNK_DATA), oldProtect, &oldProtect);
+			}
+		}
+	}
+}
+
 
 
 CDwmHelper::CDwmHelper()
@@ -300,7 +300,7 @@ void CDwmHelper::InitDwm()
 			HMODULE hUxtheme = LoadLibraryExW(L"uxtheme.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
 			if (hUxtheme)
 			{
-				//_OpenNcThemeData = reinterpret_cast<fnOpenNcThemeData>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(49)));
+				_OpenNcThemeData = reinterpret_cast<fnOpenNcThemeData>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(49)));
 				_RefreshImmersiveColorPolicyState = reinterpret_cast<fnRefreshImmersiveColorPolicyState>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(104)));
 				_GetIsImmersiveColorUsingHighContrast = reinterpret_cast<fnGetIsImmersiveColorUsingHighContrast>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(106)));
 				_ShouldAppsUseDarkMode = reinterpret_cast<fnShouldAppsUseDarkMode>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(132)));
@@ -317,7 +317,7 @@ void CDwmHelper::InitDwm()
 
 				_SetWindowCompositionAttribute = reinterpret_cast<fnSetWindowCompositionAttribute>(GetProcAddress(GetModuleHandleW(L"user32.dll"), "SetWindowCompositionAttribute"));
 
-				if (//_OpenNcThemeData &&
+				if (_OpenNcThemeData &&
 					_RefreshImmersiveColorPolicyState &&
 					_ShouldAppsUseDarkMode &&
 					_AllowDarkModeForWindow &&
@@ -332,7 +332,7 @@ void CDwmHelper::InitDwm()
 
 					global::g_darkModeEnabled = _ShouldAppsUseDarkMode() && !IsHighContrast();
 
-					//FixDarkScrollBar();
+					FixDarkScrollBar();
 				}
 			}
 		}
