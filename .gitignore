@@ -92,6 +92,9 @@ artifacts/
 /ConEmuPortableRarInfo.txt
 /build
 
+# Ignore ConEmu ini files in root
+ConEmu*.ini
+
 # Ignore files related to portable version of ConEmu
 /Release/ConEmu/WhatsNew-ConEmu-Portable.txt
 /Release/ConEmu/Portable/
