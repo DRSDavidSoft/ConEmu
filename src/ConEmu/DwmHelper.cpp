@@ -47,6 +47,18 @@ namespace global {
 	DWORD g_buildNumber = 0;
 }
 
+fnSetWindowCompositionAttribute _SetWindowCompositionAttribute = nullptr;
+fnShouldAppsUseDarkMode _ShouldAppsUseDarkMode = nullptr;
+fnAllowDarkModeForWindow _AllowDarkModeForWindow = nullptr;
+fnAllowDarkModeForApp _AllowDarkModeForApp = nullptr;
+fnFlushMenuThemes _FlushMenuThemes = nullptr;
+fnRefreshImmersiveColorPolicyState _RefreshImmersiveColorPolicyState = nullptr;
+fnIsDarkModeAllowedForWindow _IsDarkModeAllowedForWindow = nullptr;
+fnGetIsImmersiveColorUsingHighContrast _GetIsImmersiveColorUsingHighContrast = nullptr;
+//fnOpenNcThemeData _OpenNcThemeData = nullptr;
+fnShouldSystemUseDarkMode _ShouldSystemUseDarkMode = nullptr;
+fnSetPreferredAppMode _SetPreferredAppMode = nullptr;
+
 bool AllowDarkModeForWindow(HWND hWnd, bool allow)
 {
 	if (global::g_darkModeSupported)

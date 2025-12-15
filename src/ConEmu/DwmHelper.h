@@ -128,18 +128,18 @@ using fnShouldSystemUseDarkMode = bool (WINAPI*)(); // ordinal 138
 using fnSetPreferredAppMode = PreferredAppMode(WINAPI*)(PreferredAppMode appMode); // ordinal 135, in 1903
 using fnIsDarkModeAllowedForApp = bool (WINAPI*)(); // ordinal 139
 
-fnSetWindowCompositionAttribute _SetWindowCompositionAttribute = nullptr;
-fnShouldAppsUseDarkMode _ShouldAppsUseDarkMode = nullptr;
-fnAllowDarkModeForWindow _AllowDarkModeForWindow = nullptr;
-fnAllowDarkModeForApp _AllowDarkModeForApp = nullptr;
-fnFlushMenuThemes _FlushMenuThemes = nullptr;
-fnRefreshImmersiveColorPolicyState _RefreshImmersiveColorPolicyState = nullptr;
-fnIsDarkModeAllowedForWindow _IsDarkModeAllowedForWindow = nullptr;
-fnGetIsImmersiveColorUsingHighContrast _GetIsImmersiveColorUsingHighContrast = nullptr;
-//fnOpenNcThemeData _OpenNcThemeData = nullptr;
+extern fnSetWindowCompositionAttribute _SetWindowCompositionAttribute;
+extern fnShouldAppsUseDarkMode _ShouldAppsUseDarkMode;
+extern fnAllowDarkModeForWindow _AllowDarkModeForWindow;
+extern fnAllowDarkModeForApp _AllowDarkModeForApp;
+extern fnFlushMenuThemes _FlushMenuThemes;
+extern fnRefreshImmersiveColorPolicyState _RefreshImmersiveColorPolicyState;
+extern fnIsDarkModeAllowedForWindow _IsDarkModeAllowedForWindow;
+extern fnGetIsImmersiveColorUsingHighContrast _GetIsImmersiveColorUsingHighContrast;
+//extern fnOpenNcThemeData _OpenNcThemeData;
 // 1903 18362
-fnShouldSystemUseDarkMode _ShouldSystemUseDarkMode = nullptr;
-fnSetPreferredAppMode _SetPreferredAppMode = nullptr;
+extern fnShouldSystemUseDarkMode _ShouldSystemUseDarkMode;
+extern fnSetPreferredAppMode _SetPreferredAppMode;
 
 bool AllowDarkModeForWindow(HWND hWnd, bool allow);
 bool IsHighContrast();
