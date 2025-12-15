@@ -6492,10 +6492,10 @@ void CConEmuSize::DoFullScreen()
 
 void CConEmuSize::DoDarkMode()
 {
-	// if (global::g_darkModeSupported)
+	if (global::g_darkModeSupported)
 	{
-		global::g_darkModeEnabled = true;
-		_AllowDarkModeForWindow(ghWndApp, true);
+		global::g_darkModeEnabled = _ShouldAppsUseDarkMode() && !IsHighContrast();
+		_AllowDarkModeForWindow(ghWndApp, global::g_darkModeEnabled);
 		RefreshTitleBarThemeColor(ghWndApp);
 	}
 }

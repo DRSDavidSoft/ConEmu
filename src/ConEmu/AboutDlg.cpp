@@ -136,13 +136,11 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				SetWindowPos(hDlg, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 			}
 
-			/*
-			if (g_darkModeSupported)
+			if (global::g_darkModeSupported)
 			{
-				SetWindowTheme(GetDlgItem(hDlg, IDOK), L"Explorer", nullptr);
+				gpConEmu->SetWindowTheme(GetDlgItem(hDlg, IDOK), L"Explorer", nullptr);
 				SendMessageW(hDlg, WM_THEMECHANGED, 0, 0);
 			}
-			*/
 
 			const wchar_t* pszActivePage = reinterpret_cast<LPCWSTR>(lParam);
 
@@ -241,7 +239,24 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		}
 
 		case WM_CTLCOLORSTATIC:
-			if (GetWindowLongPtr(reinterpret_cast<HWND>(lParam), GWLP_ID) == stConEmuUrl)
+		{
+			// Dark mode handling
+			if (global::g_darkModeSupported && global::g_darkModeEnabled)
+			{
+				HDC hdc = reinterpret_cast<HDC>(wParam);
+				SetTextColor(hdc, darkTextColor);
+				SetBkColor(hdc, darkBkColor);
+				if (!hbrBkgnd)
+				{
+					hbrBkgnd = CreateSolidBrush(darkBkColor);
+				}
+				if (hbrBkgnd)
+				{
+					return reinterpret_cast<INT_PTR>(hbrBkgnd);
+				}
+			}
+			// Handle URL link color (normal mode)
+			else if (GetWindowLongPtr(reinterpret_cast<HWND>(lParam), GWLP_ID) == stConEmuUrl)
 			{
 				SetTextColor(reinterpret_cast<HDC>(wParam), GetSysColor(COLOR_HOTLIGHT));
 				HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
@@ -255,6 +270,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				SetBkMode(reinterpret_cast<HDC>(wParam), TRANSPARENT);
 				return reinterpret_cast<INT_PTR>(hBrush);
 			}
+		}
 
 		case WM_SETCURSOR:
 			{
@@ -267,22 +283,24 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				return FALSE;
 			}
 
-		/*
 		case WM_CTLCOLORDLG:
-		case WM_CTLCOLORSTATIC:
+		{
+			// Dark mode dialog background
+			if (global::g_darkModeSupported && global::g_darkModeEnabled)
 			{
-				if (g_darkModeSupported && g_darkModeEnabled)
+				HDC hdc = reinterpret_cast<HDC>(wParam);
+				SetBkColor(hdc, darkBkColor);
+				if (!hbrBkgnd)
 				{
-					HDC hdc = reinterpret_cast<HDC>(wParam);
-					SetTextColor(hdc, darkTextColor);
-					SetBkColor(hdc, darkBkColor);
-					if (!hbrBkgnd)
-						hbrBkgnd = CreateSolidBrush(darkBkColor);
+					hbrBkgnd = CreateSolidBrush(darkBkColor);
+				}
+				if (hbrBkgnd)
+				{
 					return reinterpret_cast<INT_PTR>(hbrBkgnd);
 				}
 			}
 			break;
-		*/
+		}
 
 		case WM_COMMAND:
 			switch (HIWORD(wParam))
@@ -358,29 +376,29 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			mh_AboutDlg = nullptr;
 			break;
 
-		/*
 		case WM_SETTINGCHANGE:
 		{
-			if (g_darkModeSupported && IsColorSchemeChangeMessage(lParam))
+			if (global::g_darkModeSupported && IsColorSchemeChangeMessage(lParam))
 				SendMessageW(hDlg, WM_THEMECHANGED, 0, 0);
 		}
 		break;
 		case WM_THEMECHANGED:
 		{
-			if (g_darkModeSupported)
+			if (global::g_darkModeSupported)
 			{
-				_AllowDarkModeForWindow(hDlg, g_darkModeEnabled);
+				// Update the dark mode state to ensure we have the current setting
+				global::g_darkModeEnabled = _ShouldAppsUseDarkMode() && !IsHighContrast();
+				_AllowDarkModeForWindow(hDlg, global::g_darkModeEnabled);
 				RefreshTitleBarThemeColor(hDlg);
 
 				HWND hButton = GetDlgItem(hDlg, IDOK);
-				_AllowDarkModeForWindow(hButton, g_darkModeEnabled);
+				_AllowDarkModeForWindow(hButton, global::g_darkModeEnabled);
 				SendMessageW(hButton, WM_THEMECHANGED, 0, 0);
 
 				UpdateWindow(hDlg);
 			}
 		}
 		break;
-		*/
 
 		default:
 			if (mp_DpiAware && mp_DpiAware->ProcessDpiMessages(hDlg, messg, wParam, lParam))
