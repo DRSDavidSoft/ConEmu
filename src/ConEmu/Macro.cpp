@@ -1135,8 +1135,6 @@ CEStr ConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 				Cmd = cwc_NextMonitor;
 			else if (lstrcmpi(pszMode, sBringHere) == 0)
 				Cmd = cwc_BringHere;
-			else if (lstrcmpi(pszMode, sDarkMode) == 0)
-				Cmd = cwc_DarkMode;
 			else //if (lstrcmpi(pszMode, sNOR) == 0)
 				Cmd = cwc_Restore;
 		}
