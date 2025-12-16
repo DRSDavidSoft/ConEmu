@@ -28,6 +28,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+// Forward declaration for HTHEME (defined in uxtheme.h)
+typedef struct HTHEME__* HTHEME;
+
 enum FrameDrawStyle
 {
 	fdt_Win2k = 1,
