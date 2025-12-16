@@ -28,9 +28,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-// Forward declaration for HTHEME (defined in uxtheme.h)
-typedef struct HTHEME__* HTHEME;
-
 enum FrameDrawStyle
 {
 	fdt_Win2k = 1,
@@ -125,7 +122,7 @@ using fnFlushMenuThemes = void (WINAPI*)(); // ordinal 136
 using fnRefreshImmersiveColorPolicyState = void (WINAPI*)(); // ordinal 104
 using fnIsDarkModeAllowedForWindow = bool (WINAPI*)(HWND hWnd); // ordinal 137
 using fnGetIsImmersiveColorUsingHighContrast = bool (WINAPI*)(IMMERSIVE_HC_CACHE_MODE mode); // ordinal 106
-using fnOpenNcThemeData = HTHEME(WINAPI*)(HWND hWnd, LPCWSTR pszClassList); // ordinal 49
+using fnOpenNcThemeData = HANDLE/*HTHEME*/(WINAPI*)(HWND hWnd, LPCWSTR pszClassList); // ordinal 49
 // 1903 18362
 using fnShouldSystemUseDarkMode = bool (WINAPI*)(); // ordinal 138
 using fnSetPreferredAppMode = PreferredAppMode(WINAPI*)(PreferredAppMode appMode); // ordinal 135, in 1903

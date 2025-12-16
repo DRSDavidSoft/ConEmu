@@ -119,7 +119,7 @@ void AllowDarkModeForApp(bool allow)
 		_SetPreferredAppMode(allow ? AllowDark : Default);
 }
 
-static HTHEME WINAPI MyOpenThemeData(HWND hWnd, LPCWSTR classList)
+static HANDLE WINAPI MyOpenThemeData(HWND hWnd, LPCWSTR classList)
 {
 	if (wcscmp(classList, L"ScrollBar") == 0)
 	{
