@@ -148,6 +148,7 @@ void FixDarkScrollBar()
 				VirtualProtect(addr, sizeof(IMAGE_THUNK_DATA), oldProtect, &oldProtect);
 			}
 		}
+		FreeLibrary(hComctl);
 	}
 }
 
