@@ -106,6 +106,36 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 	switch (uMsg)
 	{
+		case WM_THEMECHANGED:
+			ApplyTheme();
+			break;
+		case WM_NOTIFY:
+			if (global::g_darkModeEnabled && lParam)
+			{
+				auto hdr = reinterpret_cast<LPNMHDR>(lParam);
+				if (hdr->hwndFrom == mh_Toolbar && hdr->code == NM_CUSTOMDRAW)
+				{
+					auto draw = reinterpret_cast<LPNMTBCUSTOMDRAW>(lParam);
+					if (draw->nmcd.dwDrawStage == CDDS_PREPAINT) return CDRF_NOTIFYITEMDRAW;
+					if (draw->nmcd.dwDrawStage == CDDS_ITEMPREPAINT)
+					{
+						draw->clrText = draw->clrTextHighlight = DarkMode::Text;
+						draw->clrBtnFace = DarkMode::Background;
+						draw->clrBtnHighlight = draw->clrHighlightHotTrack = DarkMode::Hover;
+						return TBCDRF_USECDCOLORS | TBCDRF_HILITEHOTTRACK;
+					}
+				}
+			}
+			break;
+		case WM_ERASEBKGND:
+			if (global::g_darkModeEnabled)
+			{
+				RECT rc; GetClientRect(hwnd, &rc);
+				FillRect(reinterpret_cast<HDC>(wParam), &rc,
+					DarkMode::Brush(reinterpret_cast<HDC>(wParam), DarkMode::Background));
+				return 1;
+			}
+			break;
 		case WM_DESTROY:
 		{
 			_ASSERTE(!mh_Rebar || mh_Rebar == hwnd);
@@ -194,6 +224,26 @@ LRESULT CTabPanelWin::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 {
 	switch (uMsg)
 	{
+		case WM_PAINT:
+			if (global::g_darkModeEnabled)
+			{
+				PAINTSTRUCT ps = {};
+				HDC dc = BeginPaint(hwnd, &ps);
+				PaintDarkTabs(dc);
+				EndPaint(hwnd, &ps);
+				return 0;
+			}
+			break;
+		case WM_PRINTCLIENT:
+			if (global::g_darkModeEnabled)
+				{ PaintDarkTabs(reinterpret_cast<HDC>(wParam)); return 0; }
+			break;
+		case WM_ERASEBKGND:
+			if (global::g_darkModeEnabled) return 1;
+			break;
+		case WM_MOUSELEAVE:
+			if (global::g_darkModeEnabled) InvalidateRect(hwnd, nullptr, FALSE);
+			break;
 		case WM_DESTROY:
 		{
 			_ASSERTE(!mh_Tabbar || mh_Tabbar == hwnd);
@@ -238,6 +288,12 @@ LRESULT CTabPanelWin::TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		{
 			LRESULT lDefRc = CallWindowProc(defaultProc, hwnd, uMsg, wParam, lParam);
 			OnMouseTabbar(uMsg, -1, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+			if (global::g_darkModeEnabled)
+			{
+				TRACKMOUSEEVENT track = {sizeof(track), TME_LEAVE, hwnd, 0};
+				TrackMouseEvent(&track);
+				InvalidateRect(hwnd, nullptr, FALSE);
+			}
 			return lDefRc;
 		}
 		case WM_SETCURSOR:
@@ -378,6 +434,60 @@ RECT CTabPanelWin::GetRect()
 	return rcWnd;
 }
 
+void CTabPanelWin::PaintDarkTabs(HDC dc)
+{
+	const int saved = SaveDC(dc);
+	RECT client; GetClientRect(mh_Tabbar, &client);
+	FillRect(dc, &client, DarkMode::Brush(dc, DarkMode::Background));
+	SelectObject(dc, reinterpret_cast<HFONT>(SendMessage(mh_Tabbar, WM_GETFONT, 0, 0)));
+	SetBkMode(dc, TRANSPARENT);
+	POINT cursor; GetCursorPos(&cursor); ScreenToClient(mh_Tabbar, &cursor);
+	const int selected = TabCtrl_GetCurSel(mh_Tabbar);
+	HIMAGELIST icons = TabCtrl_GetImageList(mh_Tabbar);
+	for (int i = 0; i < TabCtrl_GetItemCount(mh_Tabbar); ++i)
+	{
+		RECT rc; if (!TabCtrl_GetItemRect(mh_Tabbar, i, &rc)) continue;
+		rc.bottom = std::min(rc.bottom, client.bottom);
+		wchar_t text[512] = {};
+		TCITEM item = {}; item.mask = TCIF_TEXT | TCIF_IMAGE | TCIF_STATE;
+		item.pszText = text; item.cchTextMax = countof(text); item.dwStateMask = TCIS_HIGHLIGHTED;
+		TabCtrl_GetItem(mh_Tabbar, i, &item);
+		const bool active = (i == selected);
+		FillRect(dc, &rc, DarkMode::Brush(dc, active ? DarkMode::Control
+			: PtInRect(&rc, cursor) ? DarkMode::Hover : DarkMode::Background));
+		if (active || (item.dwState & TCIS_HIGHLIGHTED))
+		{
+			RECT line = rc; line.top = line.bottom - 2;
+			FillRect(dc, &line, DarkMode::Brush(dc, RGB(110, 170, 220)));
+		}
+		rc.left += gpSetCls->EvalSize(6, esf_Horizontal|esf_CanUseDpi);
+		if (icons && item.iImage >= 0)
+		{
+			int width, height; ImageList_GetIconSize(icons, &width, &height);
+			ImageList_Draw(icons, item.iImage, dc, rc.left, rc.top + (RectHeight(rc)-height)/2, ILD_TRANSPARENT);
+			rc.left += width + 4;
+		}
+		rc.right -= 6;
+		SetTextColor(dc, DarkMode::Text);
+		DrawText(dc, text, -1, &rc, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
+	}
+	RestoreDC(dc, saved);
+}
+
+void CTabPanelWin::ApplyTheme()
+{
+	const bool changed = mb_DarkMode != global::g_darkModeEnabled;
+	mb_DarkMode = global::g_darkModeEnabled;
+	SendMessage(mh_Rebar, RB_SETBKCOLOR, 0, mb_DarkMode ? DarkMode::Background : GetSysColor(COLOR_BTNFACE));
+	if (changed && mh_Toolbar)
+	{
+		ShowToolsPane(false);
+		ShowToolsPane(true);
+	}
+	if (mp_Find) SendMessage(mp_Find->GetHWND(), WM_THEMECHANGED, 0, 0);
+	RedrawWindow(mh_Rebar, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
+}
+
 void CTabPanelWin::CreateRebar()
 {
 	RECT rcWnd = GetRect();
@@ -419,7 +529,8 @@ void CTabPanelWin::CreateRebar()
 		return;
 	}
 
-	COLORREF clrBack = GetSysColor(COLOR_BTNFACE);
+	mb_DarkMode = global::g_darkModeEnabled;
+	COLORREF clrBack = mb_DarkMode ? DarkMode::Background : GetSysColor(COLOR_BTNFACE);
 	SendMessage(mh_Rebar, RB_SETBKCOLOR, 0, clrBack);
 	SendMessage(mh_Rebar, RB_SETWINDOWTHEME, 0, reinterpret_cast<LPARAM>(L" "));
 
@@ -533,6 +644,8 @@ HWND CTabPanelWin::CreateToolbar()
 
 	WNDPROC defaultProc = (WNDPROC)SetWindowLongPtr(mh_Toolbar, GWLP_WNDPROC, (LONG_PTR)_ToolProc);
 	SetObj(mh_Toolbar, this, defaultProc);
+	AllowDarkModeForWindow(mh_Toolbar, global::g_darkModeEnabled);
+	gpConEmu->SetWindowTheme(mh_Toolbar, global::g_darkModeEnabled ? L"DarkMode_Explorer" : nullptr, nullptr);
 
 	DWORD lExStyle = ((DWORD)SendMessage(mh_Toolbar, TB_GETEXTENDEDSTYLE, 0, 0)) | TBSTYLE_EX_DRAWDDARROWS;
 	SendMessage(mh_Toolbar, TB_SETEXTENDEDSTYLE, 0, lExStyle);
@@ -561,10 +674,11 @@ HWND CTabPanelWin::CreateToolbar()
 	SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(nBtnSize,nBtnSize));
 
 	int iCreated = 0;
-	if (mp_ToolImg->Create(nBtnSize, nBtnSize, BID_TOOLBAR_LAST_IDX+1, GetSysColor(COLOR_BTNFACE)))
+	const COLORREF toolbarBack = global::g_darkModeEnabled ? DarkMode::Background : GetSysColor(COLOR_BTNFACE);
+	if (mp_ToolImg->Create(nBtnSize, nBtnSize, BID_TOOLBAR_LAST_IDX+1, toolbarBack))
 	{
-		iCreated += mp_ToolImg->AddButtonsMapped(g_hInstance, IDB_MAIN_TOOLBAR, 38, 1, 0, GetSysColor(COLOR_BTNFACE));
-		iCreated += mp_ToolImg->AddButtonsMapped(g_hInstance, IDB_SCROLL, 1, 1, 0xC0C0C0, GetSysColor(COLOR_BTNFACE));
+		iCreated += mp_ToolImg->AddButtonsMapped(g_hInstance, IDB_MAIN_TOOLBAR, 38, 1, 0, toolbarBack);
+		iCreated += mp_ToolImg->AddButtonsMapped(g_hInstance, IDB_SCROLL, 1, 1, 0xC0C0C0, toolbarBack);
 		_ASSERTE(iCreated == (BID_TOOLBAR_LAST_IDX+1));
 	}
 

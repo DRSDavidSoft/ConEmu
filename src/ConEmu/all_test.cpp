@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WUser.h"
 #include "ConEmu.h"
 #include "SettingsStorage.h"
+#include "IatHook.h"
 
 namespace {
 bool WINAPI TestAppsUseDarkMode() { return true; }
@@ -97,6 +98,59 @@ TEST(DarkTitleBar, NativeWindowTracksAppTheme)
 	EXPECT_EQ(S_OK, gpConEmu->DwmGetWindowAttribute(window, 20, &dark, sizeof(dark)));
 	EXPECT_EQ(FALSE, dark);
 	DestroyWindow(window);
+}
+
+TEST(DarkScrollBar, MissingImportDirectoryIsSafe)
+{
+	alignas(IMAGE_NT_HEADERS) BYTE module[1024] = {};
+	auto dos = reinterpret_cast<PIMAGE_DOS_HEADER>(module);
+	dos->e_magic = IMAGE_DOS_SIGNATURE;
+	dos->e_lfanew = sizeof(IMAGE_DOS_HEADER);
+	auto nt = reinterpret_cast<PIMAGE_NT_HEADERS>(module + dos->e_lfanew);
+	nt->Signature = IMAGE_NT_SIGNATURE;
+	nt->OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
+	EXPECT_EQ(nullptr, FindDelayLoadThunkInModule(module, "uxtheme.dll", uint16_t(49)));
+	EXPECT_EQ(nullptr, FindIatThunkInModule(module, "uxtheme.dll", "OpenThemeData"));
+	EXPECT_EQ(nullptr, FindDelayLoadThunkInModule(nullptr, "uxtheme.dll", uint16_t(49)));
+}
+
+namespace {
+HWND testThemeWindow = nullptr;
+LPCWSTR testThemeClass = nullptr;
+HANDLE WINAPI RecordOpenTheme(HWND window, LPCWSTR name)
+{
+	testThemeWindow = window;
+	testThemeClass = name;
+	return nullptr;
+}
+}
+
+TEST(DarkScrollBar, HookTracksThemeAndPreservesOtherClasses)
+{
+	if (!global::g_darkModeSupported || !_OpenNcThemeData)
+		GTEST_SKIP() << "Dark scrollbar APIs unavailable";
+	HMODULE controls = GetModuleHandleW(L"comctl32.dll");
+	auto thunk = FindDelayLoadThunkInModule(controls, "uxtheme.dll", uint16_t(49));
+	if (!thunk) GTEST_SKIP() << "Common controls have no ordinal-49 delay import";
+	RestoreDarkModeState restore;
+	const auto original = _OpenNcThemeData;
+	_OpenNcThemeData = RecordOpenTheme;
+	const auto hook = reinterpret_cast<fnOpenNcThemeData>(thunk->u1.Function);
+	const HWND window = reinterpret_cast<HWND>(1);
+	_ShouldAppsUseDarkMode = TestAppsUseDarkMode;
+	hook(window, L"ScrollBar");
+	EXPECT_STREQ(IsHighContrast() ? L"ScrollBar" : L"Explorer::ScrollBar", testThemeClass);
+	EXPECT_EQ(IsHighContrast() ? window : nullptr, testThemeWindow);
+	_ShouldAppsUseDarkMode = TestAppsUseLightMode;
+	hook(window, L"ScrollBar");
+	EXPECT_STREQ(L"ScrollBar", testThemeClass);
+	EXPECT_EQ(window, testThemeWindow);
+	hook(window, L"Button");
+	EXPECT_STREQ(L"Button", testThemeClass);
+	EXPECT_EQ(window, testThemeWindow);
+	hook(window, nullptr);
+	EXPECT_EQ(nullptr, testThemeClass);
+	_OpenNcThemeData = original;
 }
 
 #if CE_UNIT_TEST==1

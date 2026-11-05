@@ -41,6 +41,7 @@ private:
 	bool mb_ChangeAllowed;
 	int  mn_LastToolbarWidth;
 	int  mn_TabHeight;
+	bool mb_DarkMode = false;
 
 private:
 	CToolImg* mp_ToolImg;
@@ -101,6 +102,8 @@ private:
 private:
 	HWND CreateTabbar();
 	HWND CreateToolbar();
+	void ApplyTheme();
+	void PaintDarkTabs(HDC dc);
 	void UpdateToolbarPos();
 	LRESULT TabHitTest(bool abForce = false, int* pnOverTabHit = nullptr);
 	RECT GetRect();
