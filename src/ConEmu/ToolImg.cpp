@@ -436,6 +436,14 @@ bool CToolImg::GetSizeForHeight(int nPreferHeight, int& nDispW, int& nDispH)
 	return (nDispH > 0);
 }
 
+bool CToolImg::PaintButtonTransparent(int iBtn, HDC dc, int x, int y) const
+{
+	if (!mh_BmpDc || !mprc_Btns || iBtn < 0 || iBtn >= mn_BtnCount) return false;
+	const RECT rc = mprc_Btns[iBtn];
+	return GdiTransparentBlt(dc, x, y, rc.right-rc.left, rc.bottom-rc.top,
+		mh_BmpDc, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, mcr_Background) != FALSE;
+}
+
 bool CToolImg::PaintButton(int iBtn, HDC hdcDst, const int nDstX, const int nDstY, const int nDstWidth, const int nDstHeight) const
 {
 	if (!mh_Bmp || !mprc_Btns || (iBtn >= mn_BtnCount) || (mn_BtnCount <= 0))

@@ -119,10 +119,8 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 					if (draw->nmcd.dwDrawStage == CDDS_PREPAINT) return CDRF_NOTIFYITEMDRAW;
 					if (draw->nmcd.dwDrawStage == CDDS_ITEMPREPAINT)
 					{
-						draw->clrText = draw->clrTextHighlight = DarkMode::Text;
-						draw->clrBtnFace = DarkMode::Background;
-						draw->clrBtnHighlight = draw->clrHighlightHotTrack = DarkMode::Hover;
-						return TBCDRF_USECDCOLORS | TBCDRF_HILITEHOTTRACK;
+						PaintDarkToolbarButton(draw);
+						return CDRF_SKIPDEFAULT;
 					}
 				}
 			}
@@ -434,6 +432,43 @@ RECT CTabPanelWin::GetRect()
 	return rcWnd;
 }
 
+void CTabPanelWin::PaintDarkToolbarButton(LPNMTBCUSTOMDRAW draw)
+{
+	HDC dc = draw->nmcd.hdc;
+	const int saved = SaveDC(dc);
+	RECT rc = draw->nmcd.rc;
+	TBBUTTONINFO button = {sizeof(button)};
+	button.dwMask = TBIF_IMAGE | TBIF_STYLE | TBIF_STATE;
+	SendMessage(mh_Toolbar, TB_GETBUTTONINFO, draw->nmcd.dwItemSpec, reinterpret_cast<LPARAM>(&button));
+	const bool pressed = (draw->nmcd.uItemState & CDIS_SELECTED) != 0;
+	const bool checked = (button.fsState & TBSTATE_CHECKED) != 0;
+	const bool hot = (draw->nmcd.uItemState & CDIS_HOT) != 0;
+	FillRect(dc, &rc, DarkMode::Brush(dc, pressed ? RGB(80,80,80) : hot ? DarkMode::Hover
+		: checked ? DarkMode::Control : DarkMode::Background));
+	const int arrowWidth = (button.fsStyle & BTNS_DROPDOWN) ? gpSetCls->EvalSize(12, esf_Horizontal|esf_CanUseDpi) : 0;
+	const int x = rc.left + (RectWidth(rc) - arrowWidth - mn_ToolbarIconSize) / 2;
+	const int y = rc.top + (RectHeight(rc) - mn_ToolbarIconSize) / 2;
+	mp_ToolImg->PaintButtonTransparent(button.iImage, dc, x, y);
+	if (arrowWidth)
+	{
+		const int center = rc.right - arrowWidth / 2;
+		const int mid = (rc.top + rc.bottom) / 2;
+		const int half = std::max(2, arrowWidth / 5);
+		HPEN pen = CreatePen(PS_SOLID, std::max(1, arrowWidth / 10),
+			(button.fsState & TBSTATE_ENABLED) ? DarkMode::Text : DarkMode::Hint);
+		SelectObject(dc, pen);
+		MoveToEx(dc, center-half, mid-half/2, nullptr);
+		LineTo(dc, center, mid+half/2); LineTo(dc, center+half, mid-half/2);
+		SelectObject(dc, GetStockObject(BLACK_PEN)); DeleteObject(pen);
+	}
+	if (checked)
+	{
+		RECT line = rc; line.top = line.bottom-2;
+		FillRect(dc, &line, DarkMode::Brush(dc, RGB(110,170,220)));
+	}
+	RestoreDC(dc, saved);
+}
+
 void CTabPanelWin::PaintDarkTabs(HDC dc)
 {
 	const int saved = SaveDC(dc);
@@ -672,6 +707,7 @@ HWND CTabPanelWin::CreateToolbar()
 	DEBUGSTRSIZE(szLog);
 
 	SendMessage(mh_Toolbar, TB_SETBITMAPSIZE, 0, MAKELONG(nBtnSize,nBtnSize));
+	mn_ToolbarIconSize = nBtnSize;
 
 	int iCreated = 0;
 	const COLORREF toolbarBack = global::g_darkModeEnabled ? DarkMode::Background : GetSysColor(COLOR_BTNFACE);

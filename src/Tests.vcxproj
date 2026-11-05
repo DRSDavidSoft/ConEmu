@@ -587,6 +587,7 @@
     <ClCompile Include="ConEmu\DragDrop.cpp" />
     <ClCompile Include="ConEmu\DragDropData.cpp" />
     <ClCompile Include="ConEmu\DwmHelper.cpp" />
+    <ClCompile Include="ConEmu\DarkMode.cpp" />
     <ClCompile Include="ConEmu\DynDialog.cpp" />
     <ClCompile Include="ConEmu\DynDialog_test.cpp" />
     <ClCompile Include="ConEmu\ErrorInfo.cpp" />

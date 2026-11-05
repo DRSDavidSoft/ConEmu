@@ -3,6 +3,9 @@
 // Custom-control palette; light and high-contrast modes use system rendering.
 namespace DarkMode
 {
+	void ApplyDialog(HWND dialog);
+	bool ProcessDialogMessage(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam, INT_PTR& result);
+	HBRUSH ControlColor(HWND control, HDC dc, UINT message);
 	constexpr COLORREF Background = RGB(32, 32, 32);
 	constexpr COLORREF Control = RGB(48, 48, 48);
 	constexpr COLORREF Hover = RGB(64, 64, 64);
