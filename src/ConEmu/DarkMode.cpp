@@ -164,7 +164,9 @@ void PaintLabel(HWND window, HDC dc, bool hotkey)
 	const int saved = SaveDC(dc);
 	RECT rc; GetClientRect(window, &rc);
 	FillRect(dc, &rc, Brush(dc, hotkey ? Control : Background));
-	SelectObject(dc, reinterpret_cast<HFONT>(SendMessage(window, WM_GETFONT, 0, 0)));
+	HFONT font = reinterpret_cast<HFONT>(SendMessage(window, WM_GETFONT, 0, 0));
+	if (!font) font = reinterpret_cast<HFONT>(SendMessage(GetParent(window), WM_GETFONT, 0, 0));
+	SelectObject(dc, font ? font : GetStockObject(DEFAULT_GUI_FONT));
 	SetBkMode(dc, TRANSPARENT); SetTextColor(dc, IsWindowEnabled(window) ? Text : Hint);
 	const DWORD style = GetWindowLong(window, GWL_STYLE);
 	wchar_t text[1024] = {}; GetWindowText(window, text, countof(text));
@@ -190,6 +192,7 @@ void PaintLabel(HWND window, HDC dc, bool hotkey)
 		if (type == SS_CENTER) flags |= DT_CENTER;
 		else if (type == SS_RIGHT) flags |= DT_RIGHT;
 		if (style & SS_NOPREFIX) flags |= DT_NOPREFIX;
+		if (style & SS_CENTERIMAGE) flags = (flags & ~DT_WORDBREAK) | DT_SINGLELINE | DT_VCENTER;
 	}
 	DrawText(dc, text, -1, &rc, flags);
 	RestoreDC(dc, saved);
