@@ -97,6 +97,7 @@ namespace ConEmuAbout
 INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	INT_PTR lRc = 0;
+	if (DarkMode::ProcessDialogMessage(hDlg, messg, wParam, lParam, lRc)) return lRc;
 	if ((mp_ImgBtn && mp_ImgBtn->Process(hDlg, messg, wParam, lParam, lRc))
 		|| EditIconHint_Process(hDlg, messg, wParam, lParam, lRc))
 	{
@@ -106,9 +107,6 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 	PatchMsgBoxIcon(hDlg, messg, wParam, lParam);
 
-	constexpr COLORREF darkBkColor = 0x383838;
-	constexpr COLORREF darkTextColor = 0xFFFFFF;
-	static HBRUSH hbrBkgnd = nullptr;
 
 	switch (messg)
 	{
@@ -235,14 +233,12 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				TabSelected(hDlg, static_cast<int>(nPage));
 				TabCtrl_SetCurSel(hTab, static_cast<int>(nPage));
 			}
-			else if (!pszActivePage)
-			{
-				TabSelected(hDlg, 0);
-			}
 			else
 			{
-				_ASSERTE(pszActivePage==nullptr && "Unknown page name?");
+				TabSelected(hDlg, 0);
+				TabCtrl_SetCurSel(hTab, 0);
 			}
+			DarkMode::ApplyDialog(hDlg);
 
 			SetFocus(hTab);
 
@@ -254,17 +250,8 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			// Dark mode handling
 			if (global::g_darkModeSupported && global::g_darkModeEnabled)
 			{
-				HDC hdc = reinterpret_cast<HDC>(wParam);
-				SetTextColor(hdc, darkTextColor);
-				SetBkColor(hdc, darkBkColor);
-				if (!hbrBkgnd)
-				{
-					hbrBkgnd = CreateSolidBrush(darkBkColor);
-				}
-				if (hbrBkgnd)
-				{
-					return reinterpret_cast<INT_PTR>(hbrBkgnd);
-				}
+				return reinterpret_cast<INT_PTR>(DarkMode::ControlColor(reinterpret_cast<HWND>(lParam),
+					reinterpret_cast<HDC>(wParam), messg));
 			}
 			// Handle URL link color (normal mode)
 			else if (GetWindowLongPtr(reinterpret_cast<HWND>(lParam), GWLP_ID) == stConEmuUrl)
@@ -293,25 +280,6 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				}
 				return FALSE;
 			}
-
-		case WM_CTLCOLORDLG:
-		{
-			// Dark mode dialog background
-			if (global::g_darkModeSupported && global::g_darkModeEnabled)
-			{
-				HDC hdc = reinterpret_cast<HDC>(wParam);
-				SetBkColor(hdc, darkBkColor);
-				if (!hbrBkgnd)
-				{
-					hbrBkgnd = CreateSolidBrush(darkBkColor);
-				}
-				if (hbrBkgnd)
-				{
-					return reinterpret_cast<INT_PTR>(hbrBkgnd);
-				}
-			}
-			break;
-		}
 
 		case WM_COMMAND:
 			switch (HIWORD(wParam))
@@ -379,17 +347,13 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			break;
 
 		case WM_DESTROY:
-			if (hbrBkgnd)
-			{
-				DeleteObject(hbrBkgnd);
-				hbrBkgnd = nullptr;
-			}
 			mh_AboutDlg = nullptr;
 			break;
 
 		case WM_SETTINGCHANGE:
 		{
-			if (global::g_darkModeSupported && IsColorSchemeChangeMessage(lParam))
+			if (global::g_darkModeSupported
+				&& (IsColorSchemeChangeMessage(lParam) || wParam == SPI_SETHIGHCONTRAST))
 				SendMessageW(hDlg, WM_THEMECHANGED, 0, 0);
 		}
 		break;
@@ -397,10 +361,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		{
 			if (global::g_darkModeSupported)
 			{
-				// Update the dark mode state to ensure we have the current setting
-				global::g_darkModeEnabled = _ShouldAppsUseDarkMode() && !IsHighContrast();
-				_AllowDarkModeForWindow(hDlg, global::g_darkModeEnabled);
-				RefreshTitleBarThemeColor(hDlg);
+				gpConEmu->RefreshTitleBarThemeColor(hDlg);
 
 				// Apply dark theme to controls
 				HWND hButton = GetDlgItem(hDlg, IDOK);
