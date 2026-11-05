@@ -143,7 +143,6 @@ extern fnSetPreferredAppMode _SetPreferredAppMode;
 
 bool AllowDarkModeForWindow(HWND hWnd, bool allow);
 bool IsHighContrast();
-void RefreshTitleBarThemeColor(HWND hWnd);
 bool IsColorSchemeChangeMessage(LPARAM lParam);
 bool IsColorSchemeChangeMessage(UINT message, LPARAM lParam);
 void AllowDarkModeForApp(bool allow);
@@ -170,6 +169,7 @@ public:
 	void EnableGlass(bool abGlass);
 	void EnableTheming(bool abTheme);
 	void SetWindowTheme(HWND hWnd, LPCWSTR pszSubAppName, LPCWSTR pszSubIdList);
+	void RefreshTitleBarThemeColor(HWND hWnd);
 	void EnableBlurBehind(bool abBlurBehindClient);
 	bool ExtendWindowFrame();
 	bool ExtendWindowFrame(HWND hWnd, const RECT& rcMargins);

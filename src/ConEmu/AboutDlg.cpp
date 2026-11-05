@@ -389,7 +389,8 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 		case WM_SETTINGCHANGE:
 		{
-			if (global::g_darkModeSupported && IsColorSchemeChangeMessage(lParam))
+			if (global::g_darkModeSupported
+				&& (IsColorSchemeChangeMessage(lParam) || wParam == SPI_SETHIGHCONTRAST))
 				SendMessageW(hDlg, WM_THEMECHANGED, 0, 0);
 		}
 		break;
@@ -397,10 +398,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		{
 			if (global::g_darkModeSupported)
 			{
-				// Update the dark mode state to ensure we have the current setting
-				global::g_darkModeEnabled = _ShouldAppsUseDarkMode() && !IsHighContrast();
-				_AllowDarkModeForWindow(hDlg, global::g_darkModeEnabled);
-				RefreshTitleBarThemeColor(hDlg);
+				gpConEmu->RefreshTitleBarThemeColor(hDlg);
 
 				// Apply dark theme to controls
 				HWND hButton = GetDlgItem(hDlg, IDOK);

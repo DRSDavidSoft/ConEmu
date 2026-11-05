@@ -74,33 +74,44 @@ bool IsHighContrast()
 	return false;
 }
 
-void RefreshTitleBarThemeColor(HWND hWnd)
+void CDwmHelper::RefreshTitleBarThemeColor(HWND hWnd)
 {
-	BOOL dark = FALSE;
-	if (_IsDarkModeAllowedForWindow(hWnd) &&
-		_ShouldAppsUseDarkMode() &&
-		!IsHighContrast())
-	{
-		dark = TRUE;
-	}
-	if (global::g_buildNumber < 18362)
+	if (!hWnd || !global::g_darkModeSupported)
+		return;
+
+	global::g_darkModeEnabled = _ShouldAppsUseDarkMode() && !IsHighContrast();
+	BOOL dark = global::g_darkModeEnabled;
+	_AllowDarkModeForWindow(hWnd, dark != FALSE);
+
+	// Prefer the DWM attribute on current Windows. Keep the older Windows 10
+	// paths, and resolve DWM dynamically as with the other optional APIs.
+	const DWORD useImmersiveDarkMode = 20;
+	const HRESULT hr = dwm._DwmSetWindowAttribute
+		? dwm._DwmSetWindowAttribute(hWnd, useImmersiveDarkMode, &dark, sizeof(dark))
+		: E_NOTIMPL;
+	if (FAILED(hr) && global::g_buildNumber < 18362)
 		SetPropW(hWnd, L"UseImmersiveDarkModeColors", reinterpret_cast<HANDLE>(static_cast<INT_PTR>(dark)));
-	else if (_SetWindowCompositionAttribute)
+	else if (FAILED(hr) && _SetWindowCompositionAttribute)
 	{
 		WINDOWCOMPOSITIONATTRIBDATA data = { WCA_USEDARKMODECOLORS, &dark, sizeof(dark) };
 		_SetWindowCompositionAttribute(hWnd, &data);
 	}
+
+	RedrawWindow(hWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_FRAME);
 }
 
 bool IsColorSchemeChangeMessage(LPARAM lParam)
 {
 	bool is = false;
-	if (lParam && CompareStringOrdinal(reinterpret_cast<LPCWCH>(lParam), -1, L"ImmersiveColorSet", -1, TRUE) == CSTR_EQUAL)
+	if (!global::g_darkModeSupported)
+		return false;
+	if (lParam && lstrcmpiW(reinterpret_cast<LPCWSTR>(lParam), L"ImmersiveColorSet") == 0)
 	{
 		_RefreshImmersiveColorPolicyState();
 		is = true;
 	}
-	_GetIsImmersiveColorUsingHighContrast(IHCM_REFRESH);
+	if (_GetIsImmersiveColorUsingHighContrast)
+		_GetIsImmersiveColorUsingHighContrast(IHCM_REFRESH);
 	return is;
 }
 
@@ -295,9 +306,10 @@ void CDwmHelper::InitDwm()
 		DWORD major, minor;
 		RtlGetNtVersionNumbers(&major, &minor, &global::g_buildNumber);
 		global::g_buildNumber &= ~0xF0000000;
-		if (major == 10 && minor == 0 /* && CheckBuildNumber(global::g_buildNumber)*/)
+		// These ordinals have different meanings on older Windows 10 builds.
+		if (major == 10 && minor == 0 && global::g_buildNumber >= 17763)
 		{
-			HMODULE hUxtheme = LoadLibraryExW(L"uxtheme.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+			HMODULE hUxtheme = mh_UxTheme;
 			if (hUxtheme)
 			{
 				//_OpenNcThemeData = reinterpret_cast<fnOpenNcThemeData>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(49)));

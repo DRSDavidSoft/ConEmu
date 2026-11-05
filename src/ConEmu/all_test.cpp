@@ -46,6 +46,59 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "SettingsStorage.h"
 
+namespace {
+bool WINAPI TestAppsUseDarkMode() { return true; }
+bool WINAPI TestAppsUseLightMode() { return false; }
+
+struct RestoreDarkModeState
+{
+	fnShouldAppsUseDarkMode shouldAppsUseDarkMode = _ShouldAppsUseDarkMode;
+	fnGetIsImmersiveColorUsingHighContrast highContrast = _GetIsImmersiveColorUsingHighContrast;
+	bool supported = global::g_darkModeSupported;
+	bool enabled = global::g_darkModeEnabled;
+	~RestoreDarkModeState()
+	{
+		_ShouldAppsUseDarkMode = shouldAppsUseDarkMode;
+		_GetIsImmersiveColorUsingHighContrast = highContrast;
+		global::g_darkModeSupported = supported;
+		global::g_darkModeEnabled = enabled;
+	}
+};
+}
+
+TEST(DarkTitleBar, UnsupportedSystemAndOptionalHighContrastApi)
+{
+	RestoreDarkModeState restore;
+	global::g_darkModeSupported = false;
+	_ShouldAppsUseDarkMode = nullptr;
+	_GetIsImmersiveColorUsingHighContrast = nullptr;
+	gpConEmu->RefreshTitleBarThemeColor(nullptr);
+	EXPECT_FALSE(IsColorSchemeChangeMessage(reinterpret_cast<LPARAM>(L"ImmersiveColorSet")));
+	// An absent optional ordinal must not crash a supported system either.
+	global::g_darkModeSupported = true;
+	EXPECT_FALSE(IsColorSchemeChangeMessage(0));
+}
+
+TEST(DarkTitleBar, NativeWindowTracksAppTheme)
+{
+	if (!global::g_darkModeSupported || global::g_buildNumber < 22000)
+		GTEST_SKIP() << "DWM dark-mode readback requires Windows 11";
+	RestoreDarkModeState restore;
+	const HWND window = CreateWindowExW(0, L"STATIC", L"Dark title bar regression",
+		WS_OVERLAPPEDWINDOW, 0, 0, 320, 200, nullptr, nullptr, GetModuleHandle(nullptr), nullptr);
+	ASSERT_NE(nullptr, window);
+	_ShouldAppsUseDarkMode = TestAppsUseDarkMode;
+	gpConEmu->RefreshTitleBarThemeColor(window);
+	BOOL dark = FALSE;
+	EXPECT_EQ(S_OK, gpConEmu->DwmGetWindowAttribute(window, 20, &dark, sizeof(dark)));
+	EXPECT_EQ(IsHighContrast() ? FALSE : TRUE, dark);
+	_ShouldAppsUseDarkMode = TestAppsUseLightMode;
+	gpConEmu->RefreshTitleBarThemeColor(window);
+	EXPECT_EQ(S_OK, gpConEmu->DwmGetWindowAttribute(window, 20, &dark, sizeof(dark)));
+	EXPECT_EQ(FALSE, dark);
+	DestroyWindow(window);
+}
+
 #if CE_UNIT_TEST==1
 #include "../common/MAssert.h"
 extern bool gbVerifyVerbose;
