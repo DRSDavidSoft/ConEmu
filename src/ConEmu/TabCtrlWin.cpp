@@ -453,8 +453,8 @@ void CTabPanelWin::PaintDarkToolbarButton(LPNMTBCUSTOMDRAW draw)
 	{
 		const int center = rc.right - arrowWidth / 2;
 		const int mid = (rc.top + rc.bottom) / 2;
-		const int half = std::max(2, arrowWidth / 5);
-		HPEN pen = CreatePen(PS_SOLID, std::max(1, arrowWidth / 10),
+		const int half = std::max(4, arrowWidth / 4);
+		HPEN pen = CreatePen(PS_SOLID, std::max(2, arrowWidth / 8),
 			(button.fsState & TBSTATE_ENABLED) ? DarkMode::Text : DarkMode::Hint);
 		SelectObject(dc, pen);
 		MoveToEx(dc, center-half, mid-half/2, nullptr);

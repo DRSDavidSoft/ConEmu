@@ -2,6 +2,8 @@
 #include "Header.h"
 #include "ConEmu.h"
 #include "DarkMode.h"
+#include "SetDlgColors.h"
+#include "DlgItemHelper.h"
 
 namespace DarkMode
 {
@@ -76,8 +78,11 @@ void PaintButton(HWND window, HDC dc)
 				FillRect(dc, &mark, Brush(dc, Hint));
 			else
 			{
+				HPEN checkPen = CreatePen(PS_SOLID, 2, enabled ? Accent : Hint);
+				HGDIOBJ previous = SelectObject(dc, checkPen);
 				MoveToEx(dc, x+3, y+unit/2, nullptr);
 				LineTo(dc, x+unit/2, y+unit-4); LineTo(dc, x+unit-3, y+3);
+				SelectObject(dc, previous); DeleteObject(checkPen);
 			}
 		}
 		if (style & BS_LEFTTEXT) label.right -= unit + 5;
@@ -124,18 +129,88 @@ void PaintTabs(HWND window, HDC dc)
 	RestoreDC(dc, saved);
 }
 
+bool CustomStatic(HWND control)
+{
+	const int id = GetDlgCtrlID(control);
+	return (id >= c0 && id <= CSetDlgColors::MAX_COLOR_EDT_ID) || (id >= c32 && id <= c38)
+		|| CDlgItemHelper::isHyperlinkCtrl(id);
+}
+
+void PaintHeader(HWND window, HDC dc)
+{
+	const int saved = SaveDC(dc);
+	RECT client; GetClientRect(window, &client);
+	FillRect(dc, &client, Brush(dc, Background));
+	SelectObject(dc, reinterpret_cast<HFONT>(SendMessage(window, WM_GETFONT, 0, 0)));
+	SetBkMode(dc, TRANSPARENT); SetTextColor(dc, Text);
+	POINT cursor; GetCursorPos(&cursor); ScreenToClient(window, &cursor);
+	for (int i = 0; i < Header_GetItemCount(window); ++i)
+	{
+		RECT rc; Header_GetItemRect(window, i, &rc);
+		wchar_t text[256] = {}; HDITEM item = {};
+		item.mask = HDI_TEXT | HDI_FORMAT; item.pszText = text; item.cchTextMax = countof(text);
+		Header_GetItem(window, i, &item);
+		FillRect(dc, &rc, Brush(dc, PtInRect(&rc, cursor) ? Hover : Control));
+		RECT edge = rc; edge.left = edge.right - 1; FillRect(dc, &edge, Brush(dc, Border));
+		InflateRect(&rc, -5, 0);
+		DrawText(dc, text, -1, &rc, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX
+			| ((item.fmt & HDF_CENTER) ? DT_CENTER : (item.fmt & HDF_RIGHT) ? DT_RIGHT : DT_LEFT));
+	}
+	RestoreDC(dc, saved);
+}
+
+void PaintLabel(HWND window, HDC dc, bool hotkey)
+{
+	const int saved = SaveDC(dc);
+	RECT rc; GetClientRect(window, &rc);
+	FillRect(dc, &rc, Brush(dc, hotkey ? Control : Background));
+	SelectObject(dc, reinterpret_cast<HFONT>(SendMessage(window, WM_GETFONT, 0, 0)));
+	SetBkMode(dc, TRANSPARENT); SetTextColor(dc, IsWindowEnabled(window) ? Text : Hint);
+	const DWORD style = GetWindowLong(window, GWL_STYLE);
+	wchar_t text[1024] = {}; GetWindowText(window, text, countof(text));
+	UINT flags = DT_WORDBREAK;
+	if (hotkey)
+	{
+		const WORD key = LOWORD(SendMessage(window, HKM_GETHOTKEY, 0, 0));
+		text[0] = 0;
+		if (HIBYTE(key) & HOTKEYF_CONTROL) lstrcat(text, L"Ctrl + ");
+		if (HIBYTE(key) & HOTKEYF_ALT) lstrcat(text, L"Alt + ");
+		if (HIBYTE(key) & HOTKEYF_SHIFT) lstrcat(text, L"Shift + ");
+		if (LOBYTE(key))
+		{
+			const LONG scan = MapVirtualKey(LOBYTE(key), MAPVK_VK_TO_VSC) << 16;
+			GetKeyNameText(scan | ((HIBYTE(key) & HOTKEYF_EXT) ? (1 << 24) : 0), text + lstrlen(text), 128);
+		}
+		else lstrcpy(text, L"None");
+		InflateRect(&rc, -2, 0); flags = DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX;
+	}
+	else
+	{
+		const DWORD type = style & SS_TYPEMASK;
+		if (type == SS_CENTER) flags |= DT_CENTER;
+		else if (type == SS_RIGHT) flags |= DT_RIGHT;
+		if (style & SS_NOPREFIX) flags |= DT_NOPREFIX;
+	}
+	DrawText(dc, text, -1, &rc, flags);
+	RestoreDC(dc, saved);
+}
+
 LRESULT CALLBACK ControlProc(HWND window, UINT message, WPARAM wp, LPARAM lp, UINT_PTR id, DWORD_PTR kind)
 {
 	if (message == WM_NCDESTROY) RemoveWindowSubclass(window, ControlProc, id);
 	if (global::g_darkModeEnabled)
 	{
-		if (message >= WM_CTLCOLORMSGBOX && message <= WM_CTLCOLORSTATIC)
+		if (message >= WM_CTLCOLORMSGBOX && message <= WM_CTLCOLORSTATIC
+			&& !(message == WM_CTLCOLORSTATIC && CustomStatic(reinterpret_cast<HWND>(lp))))
 			return reinterpret_cast<LRESULT>(ControlColor(reinterpret_cast<HWND>(lp), reinterpret_cast<HDC>(wp), message));
 		if (kind && (message == WM_PAINT || message == WM_PRINTCLIENT))
 		{
 			PAINTSTRUCT ps = {};
 			HDC dc = message == WM_PAINT ? BeginPaint(window, &ps) : reinterpret_cast<HDC>(wp);
-			if (kind == 1) PaintButton(window, dc); else PaintTabs(window, dc);
+			if (kind == 1) PaintButton(window, dc);
+			else if (kind == 2) PaintTabs(window, dc);
+			else if (kind == 3) PaintHeader(window, dc);
+			else PaintLabel(window, dc, kind == 5);
 			if (message == WM_PAINT) EndPaint(window, &ps);
 			return 0;
 		}
@@ -155,7 +230,11 @@ LRESULT CALLBACK ControlProc(HWND window, UINT message, WPARAM wp, LPARAM lp, UI
 
 BOOL CALLBACK ApplyControl(HWND window, LPARAM)
 {
-	if (IsClass(window, L"#32770")) return TRUE;
+	if (IsClass(window, L"#32770"))
+	{
+		SetWindowSubclass(window, ControlProc, SubclassId, 0);
+		return TRUE;
+	}
 	const bool dark = global::g_darkModeEnabled;
 	AllowDarkModeForWindow(window, dark);
 	DWORD_PTR kind = 0;
@@ -165,6 +244,10 @@ BOOL CALLBACK ApplyControl(HWND window, LPARAM)
 		if ((style & BS_TYPEMASK) != BS_OWNERDRAW && !(style & (BS_BITMAP | BS_ICON))) kind = 1;
 	}
 	else if (IsClass(window, WC_TABCONTROL)) kind = 2;
+	else if (IsClass(window, WC_HEADER)) kind = 3;
+	else if (IsClass(window, L"Static") && (GetWindowLong(window, GWL_STYLE) & SS_TYPEMASK) <= SS_RIGHT
+		&& !CustomStatic(window)) kind = 4;
+	else if (IsClass(window, HOTKEY_CLASS)) kind = 5;
 	SetWindowSubclass(window, ControlProc, SubclassId, kind);
 	const wchar_t* theme = dark ? L"DarkMode_Explorer" : nullptr;
 	if (IsClass(window, L"Edit") || IsClass(window, L"ComboBox")) theme = dark ? L"DarkMode_CFD" : nullptr;
@@ -209,7 +292,8 @@ bool ProcessDialogMessage(HWND dialog, UINT message, WPARAM wp, LPARAM lp, INT_P
 		&& (IsColorSchemeChangeMessage(lp) || wp == SPI_SETHIGHCONTRAST)))
 		ApplyDialog(dialog);
 	if (global::g_darkModeEnabled && (message == WM_CTLCOLORDLG || message == WM_CTLCOLOREDIT
-		|| message == WM_CTLCOLORLISTBOX || message == WM_CTLCOLORBTN))
+		|| message == WM_CTLCOLORLISTBOX || message == WM_CTLCOLORBTN
+		|| (message == WM_CTLCOLORSTATIC && !CustomStatic(reinterpret_cast<HWND>(lp)))))
 	{
 		result = reinterpret_cast<INT_PTR>(ControlColor(reinterpret_cast<HWND>(lp), reinterpret_cast<HDC>(wp), message));
 		return true;
