@@ -52,6 +52,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace {
 bool WINAPI TestAppsUseDarkMode() { return true; }
 bool WINAPI TestAppsUseLightMode() { return false; }
+LRESULT CALLBACK TestPalettePreview(HWND window, UINT message, WPARAM wp, LPARAM lp, UINT_PTR, DWORD_PTR)
+{
+	if (message == WM_PRINTCLIENT)
+	{
+		RECT rc; GetClientRect(window, &rc);
+		const HDC dc = reinterpret_cast<HDC>(wp);
+		FillRect(dc, &rc, DarkMode::Brush(dc, RGB(255,100,0)));
+		return 0;
+	}
+	return DefSubclassProc(window, message, wp, lp);
+}
 
 struct RestoreDarkModeState
 {
@@ -191,6 +202,9 @@ TEST(DarkControls, NativeControlsRenderDarkAndReturnToLight)
 		0, 40, 100, 30, parent, nullptr, GetModuleHandle(nullptr), nullptr);
 	const HWND header = CreateWindowEx(0, WC_HEADER, L"", WS_CHILD,
 		0, 80, 100, 30, parent, nullptr, GetModuleHandle(nullptr), nullptr);
+	const HWND preview = CreateWindowEx(0, L"STATIC", L"Preview", WS_CHILD,
+		0, 120, 100, 30, parent, nullptr, GetModuleHandle(nullptr), nullptr);
+	SetWindowSubclass(preview, TestPalettePreview, 1, 0);
 	DarkMode::ApplyDialog(parent);
 	const HDC screen = GetDC(nullptr), dc = CreateCompatibleDC(screen);
 	const HBITMAP bitmap = CreateCompatibleBitmap(screen, 100, 30);
@@ -202,6 +216,8 @@ TEST(DarkControls, NativeControlsRenderDarkAndReturnToLight)
 	EXPECT_EQ(DarkMode::Background, GetPixel(dc, 99, 29));
 	SendMessage(header, WM_PRINTCLIENT, reinterpret_cast<WPARAM>(dc), PRF_CLIENT);
 	EXPECT_EQ(DarkMode::Background, GetPixel(dc, 99, 29));
+	SendMessage(preview, WM_PRINTCLIENT, reinterpret_cast<WPARAM>(dc), PRF_CLIENT);
+	EXPECT_EQ(RGB(255,100,0), GetPixel(dc, 99, 29));
 	_ShouldAppsUseDarkMode = TestAppsUseLightMode;
 	DarkMode::ApplyDialog(parent);
 	EXPECT_FALSE(global::g_darkModeEnabled);

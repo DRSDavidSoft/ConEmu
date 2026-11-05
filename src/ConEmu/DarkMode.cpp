@@ -203,10 +203,13 @@ LRESULT CALLBACK ControlProc(HWND window, UINT message, WPARAM wp, LPARAM lp, UI
 	if (message == WM_NCDESTROY) RemoveWindowSubclass(window, ControlProc, id);
 	if (global::g_darkModeEnabled)
 	{
+		// Enabled statics may have application painting (e.g. the palette preview).
+		// Only replace the native embossed text used by disabled labels.
+		const bool paint = kind && (kind != 4 || !IsWindowEnabled(window));
 		if (message >= WM_CTLCOLORMSGBOX && message <= WM_CTLCOLORSTATIC
 			&& !(message == WM_CTLCOLORSTATIC && CustomStatic(reinterpret_cast<HWND>(lp))))
 			return reinterpret_cast<LRESULT>(ControlColor(reinterpret_cast<HWND>(lp), reinterpret_cast<HDC>(wp), message));
-		if (kind && (message == WM_PAINT || message == WM_PRINTCLIENT))
+		if (paint && (message == WM_PAINT || message == WM_PRINTCLIENT))
 		{
 			PAINTSTRUCT ps = {};
 			HDC dc = message == WM_PAINT ? BeginPaint(window, &ps) : reinterpret_cast<HDC>(wp);
@@ -217,7 +220,7 @@ LRESULT CALLBACK ControlProc(HWND window, UINT message, WPARAM wp, LPARAM lp, UI
 			if (message == WM_PAINT) EndPaint(window, &ps);
 			return 0;
 		}
-		if (kind && message == WM_ERASEBKGND) return 1;
+		if (paint && message == WM_ERASEBKGND) return 1;
 		if (kind && message == WM_MOUSEMOVE)
 		{
 			TRACKMOUSEEVENT track = {sizeof(track), TME_LEAVE, window, 0}; TrackMouseEvent(&track);
