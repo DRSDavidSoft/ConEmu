@@ -1,6 +1,8 @@
 # Sim-md's ConEmu fork
 
-ConEmu is a Windows console emulator with tabs and split panes. This fork adds native Windows ARM64 support, Far Manager integration, Windows theming, and an optional ConPTY mode without ConEmuHk.
+ConEmu is a terminal emulator for Windows. It brings multiple console sessions together in one customizable window, with tabs and split panes. You can run Command Prompt, PowerShell, Bash, Far Manager, and other console applications side by side. ConEmu also supports configurable hotkeys, color schemes, and a drop-down terminal that you can show or hide with a shortcut.
+
+This fork adds native Windows ARM64 support, Far Manager integration, Windows theming, and an optional ConPTY mode without ConEmuHk.
 
 ## Download
 
