@@ -2,7 +2,7 @@ name: Fork build and tests
 
 on:
   push:
-    branches: [conemu-arm64-nohooks]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -116,7 +116,7 @@ jobs:
           if ($result -ne 0) { exit $result }
 
   release:
-    if: github.repository == 'Sim-md/ConEmu' && github.ref == 'refs/heads/conemu-arm64-nohooks'
+    if: github.repository == 'Sim-md/ConEmu' && github.ref == 'refs/heads/main'
     needs: [intel, arm64-tests]
     runs-on: ubuntu-24.04
     timeout-minutes: 10

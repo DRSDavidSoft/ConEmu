@@ -4,11 +4,11 @@ This fork adds native Windows ARM64 support, Far Manager integration, Windows th
 
 - [Download ARM64, x86, and x64 ZIPs](https://github.com/Sim-md/ConEmu/releases)
 - [Fork CI status and logs](https://github.com/Sim-md/ConEmu/actions/workflows/fork-build.yml)
-- [ARM64 build instructions](https://github.com/Sim-md/ConEmu/blob/conemu-arm64-nohooks/ARM64-BUILD.md)
-- [x86 and x64 MSBuild commands](https://github.com/Sim-md/ConEmu/blob/conemu-arm64-nohooks/.github/workflows/fork-build.yml)
+- [ARM64 build instructions](https://github.com/Sim-md/ConEmu/blob/main/ARM64-BUILD.md)
+- [x86 and x64 MSBuild commands](https://github.com/Sim-md/ConEmu/blob/main/.github/workflows/fork-build.yml)
 - [Original ConEmu repository](https://github.com/ConEmu/ConEmu)
 
-The fork's builds use the [conemu-arm64-nohooks branch](https://github.com/Sim-md/ConEmu/tree/conemu-arm64-nohooks).
+The fork's builds use the [main branch](https://github.com/Sim-md/ConEmu/tree/main).
 
 ## About the original ConEmu
 
