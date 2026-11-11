@@ -3102,20 +3102,22 @@ void CVirtualConsole::ClearPartBrushes()
 HBRUSH CVirtualConsole::PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeCol)
 {
 	_ASSERTE(isMainThread());
-	//std::vector<PARTBRUSHES>::iterator iter = m_PartBrushes.begin();
-	//while (iter != m_PartBrushes.end()) {
-	PARTBRUSHES *pbr = m_PartBrushes;
-
-	for (UINT br=0; br < MAX_COUNT_PART_BRUSHES && pbr->ch; br++, pbr++)
+	UINT br = 0;
+	for (; br < MAX_COUNT_PART_BRUSHES; ++br)
 	{
-		if (pbr->ch == ch && pbr->nBackCol == nBackCol && pbr->nForeCol == nForeCol)
+		const auto& brush = m_PartBrushes[br];
+		if (!brush.ch)
+			break;
+		if (brush.ch == ch && brush.nBackCol == nBackCol && brush.nForeCol == nForeCol)
 		{
-			_ASSERTE(pbr->hBrush);
-			return pbr->hBrush;
+			_ASSERTE(brush.hBrush);
+			return brush.hBrush;
 		}
 	}
 
-	if (pbr >= (m_PartBrushes + MAX_COUNT_PART_BRUSHES))
+	const bool full = (br == MAX_COUNT_PART_BRUSHES);
+	auto* pbr = &m_PartBrushes[full ? MAX_COUNT_PART_BRUSHES - 1 : br];
+	if (full)
 	{
 		#ifdef _DEBUG
 		static bool bShown;
@@ -3125,7 +3127,6 @@ HBRUSH CVirtualConsole::PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeC
 			_ASSERTE(FALSE && "Too much background brushes were created!");
 		}
 		#endif
-		pbr = &m_PartBrushes[MAX_COUNT_PART_BRUSHES-1];
 		DeleteObject(pbr->hBrush);
 		pbr->hBrush = nullptr;
 	}
