@@ -273,7 +273,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	pszSize += 6;
 	dump.crSize.X = (SHORT)wcstol(pszSize, &pszRN, 10);
 
-	if (!pszRN || *pszRN!=L'x')
+	if (*pszRN!=L'x')
 	{
 		DisplayLastError(L"Dump file invalid format (Size.X)", -1);
 		goto wrap;
@@ -282,7 +282,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	pszSize = pszRN + 1;
 	dump.crSize.Y = (SHORT)wcstol(pszSize, &pszRN, 10);
 
-	if (!pszRN || (*pszRN!=L' ' && *pszRN!=L'\r'))
+	if ((*pszRN!=L' ' && *pszRN!=L'\r'))
 	{
 		DisplayLastError(L"Dump file invalid format (Size.Y)", -1);
 		goto wrap;
@@ -300,7 +300,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 			pszSize += 8;
 			cr.X = (SHORT)wcstol(pszSize, &pszRN, 10);
 
-			if (!pszRN || *pszRN!=L'x')
+			if (*pszRN!=L'x')
 			{
 				DisplayLastError(L"Dump file invalid format (Cursor)", -1);
 				goto wrap;

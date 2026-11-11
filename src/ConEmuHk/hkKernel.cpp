@@ -103,7 +103,7 @@ bool GetTime(bool bSystem, LPSYSTEMTIME lpSystemTime)
 		}
 
 		// Time. Optional?
-		if (!p || !*p)
+		if (!*p)
 		{
 			SYSTEMTIME lt; GetLocalTime(&lt);
 			st.wHour = lt.wHour;

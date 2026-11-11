@@ -3106,7 +3106,7 @@ HBRUSH CVirtualConsole::PartBrush(wchar_t ch, COLORREF nBackCol, COLORREF nForeC
 	//while (iter != m_PartBrushes.end()) {
 	PARTBRUSHES *pbr = m_PartBrushes;
 
-	for (UINT br=0; pbr->ch && br<MAX_COUNT_PART_BRUSHES; br++, pbr++)
+	for (UINT br=0; br < MAX_COUNT_PART_BRUSHES && pbr->ch; br++, pbr++)
 	{
 		if (pbr->ch == ch && pbr->nBackCol == nBackCol && pbr->nForeCol == nForeCol)
 		{

@@ -368,8 +368,14 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, CEStr& rsBuffer, DWORD& rnChars, 
 	// If caller requested RAW data
 	if (DefaultCP == static_cast<DWORD>(-1))
 	{
-		rsBuffer.Attach(reinterpret_cast<wchar_t*>(ansiBuffer.Detach()));
-		pszDataA = nullptr;
+		// This legacy mode returns bytes and a byte count, including embedded NULs.
+		const auto units = (nRead + sizeof(wchar_t) - 1) / sizeof(wchar_t);
+		auto* raw = rsBuffer.GetBuffer(units + 1);
+		if (!raw)
+			return -3;
+		raw[units - 1] = 0;
+		memcpy(raw, pszDataA, nRead);
+		raw[units] = 0;
 		rnChars = nRead;
 		return 0;
 	}
@@ -399,26 +405,17 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, CEStr& rsBuffer, DWORD& rnChars, 
 	else if ((DefaultCP == 1200) || (nRead >= 2 && pszDataA[0] == '\xFF' && pszDataA[1] == '\xFE'))
 	{
 		const bool isBom = (nRead >= 2 && pszDataA[0] == '\xFF' && pszDataA[1] == '\xFE');
-		if (!isBom)
-		{
-			rsBuffer.Attach(reinterpret_cast<wchar_t*>(ansiBuffer.Detach()));
-			pszDataA = nullptr;
-			rnChars = (nSize >> 1);
-		}
-		else
-		{
-			const auto* pszNoBom = pszDataA + 2;
-			const DWORD nLenNoBom = nSize - 2;
-			// CP-1200 BOM
-			rsBuffer.Set(reinterpret_cast<const wchar_t*>(pszNoBom));
-			if (!rsBuffer)
-			{
-				_ASSERTE(rsBuffer); //-V571
-				return -7;
-			}
-			rnChars = (nLenNoBom >> 1);
-			rsBuffer.SetAt(rnChars, 0);
-		}
+		const DWORD offset = isBom ? 2 : 0;
+		const DWORD bytes = nRead - offset;
+		if (bytes % sizeof(wchar_t))
+			return -7;
+		const DWORD units = bytes / sizeof(wchar_t);
+		auto* text = rsBuffer.GetBuffer(units + 1);
+		if (!text)
+			return -7;
+		memcpy(text, pszDataA + offset, bytes);
+		text[units] = 0;
+		rnChars = units;
 	}
 	else
 	{
