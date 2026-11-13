@@ -26,6 +26,9 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+// Dark-mode integration adapted from ysc3839/win32-darkmode (via HO-COOH).
+// See ../../Release/ConEmu/DarkMode-LICENSE.txt for the MIT license notices.
+
 #pragma once
 
 enum FrameDrawStyle
@@ -122,7 +125,7 @@ using fnFlushMenuThemes = void (WINAPI*)(); // ordinal 136
 using fnRefreshImmersiveColorPolicyState = void (WINAPI*)(); // ordinal 104
 using fnIsDarkModeAllowedForWindow = bool (WINAPI*)(HWND hWnd); // ordinal 137
 using fnGetIsImmersiveColorUsingHighContrast = bool (WINAPI*)(IMMERSIVE_HC_CACHE_MODE mode); // ordinal 106
-//using fnOpenNcThemeData = HTHEME(WINAPI*)(HWND hWnd, LPCWSTR pszClassList); // ordinal 49
+using fnOpenNcThemeData = HANDLE/*HTHEME*/(WINAPI*)(HWND hWnd, LPCWSTR pszClassList); // ordinal 49
 // 1903 18362
 using fnShouldSystemUseDarkMode = bool (WINAPI*)(); // ordinal 138
 using fnSetPreferredAppMode = PreferredAppMode(WINAPI*)(PreferredAppMode appMode); // ordinal 135, in 1903
@@ -136,18 +139,17 @@ extern fnFlushMenuThemes _FlushMenuThemes;
 extern fnRefreshImmersiveColorPolicyState _RefreshImmersiveColorPolicyState;
 extern fnIsDarkModeAllowedForWindow _IsDarkModeAllowedForWindow;
 extern fnGetIsImmersiveColorUsingHighContrast _GetIsImmersiveColorUsingHighContrast;
-//extern fnOpenNcThemeData _OpenNcThemeData;
+extern fnOpenNcThemeData _OpenNcThemeData;
 // 1903 18362
 extern fnShouldSystemUseDarkMode _ShouldSystemUseDarkMode;
 extern fnSetPreferredAppMode _SetPreferredAppMode;
 
 bool AllowDarkModeForWindow(HWND hWnd, bool allow);
 bool IsHighContrast();
-void RefreshTitleBarThemeColor(HWND hWnd);
 bool IsColorSchemeChangeMessage(LPARAM lParam);
 bool IsColorSchemeChangeMessage(UINT message, LPARAM lParam);
 void AllowDarkModeForApp(bool allow);
-//void FixDarkScrollBar();
+void FixDarkScrollBar();
 
 class CDwmHelper
 {
@@ -167,9 +169,17 @@ public:
 	bool IsDwmAllowed();
 	bool IsGlass();
 	bool IsThemed();
+	static bool IsHighContrast();
+	static bool IsWindowsDarkMode();
+	static COLORREF WindowsAccentColor();
+	static COLORREF BlendColors(COLORREF base, COLORREF tint, unsigned tintPercent);
+	void ApplyPopupMenuTheme(HWND owner);
+	void EnableDarkCaption(HWND window);
 	void EnableGlass(bool abGlass);
 	void EnableTheming(bool abTheme);
 	void SetWindowTheme(HWND hWnd, LPCWSTR pszSubAppName, LPCWSTR pszSubIdList);
+	void RefreshTitleBarThemeColor(HWND hWnd);
+	bool UpdateConsoleCaptionColors(HWND window);
 	void EnableBlurBehind(bool abBlurBehindClient);
 	bool ExtendWindowFrame();
 	bool ExtendWindowFrame(HWND hWnd, const RECT& rcMargins);
@@ -200,6 +210,9 @@ public:
 	// Per-monitor DPI support
 	BOOL AdjustWindowRectExForDpi(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi);
 private:
+	static constexpr COLORREF DefaultCaptionColor = 0xFFFFFFFF;
+	COLORREF captionBackground_ = DefaultCaptionColor;
+	COLORREF captionForeground_ = DefaultCaptionColor;
 	HMODULE mh_User32 = nullptr;
 	HMODULE mh_DwmApi = nullptr;
 	HMODULE mh_UxTheme = nullptr;
