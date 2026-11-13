@@ -501,6 +501,8 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= nullptr*/)
 
 	LOGFONT lf = {};
 	lf.lfWeight = FW_DONTCARE;
+	if (gpConEmu->IsWindowBackdropActive())
+		lf.lfQuality = ANTIALIASED_QUALITY;
 	lf.lfCharSet = gpSet->nStatusFontCharSet;
 	lf.lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
 	wcscpy_c(lf.lfFaceName, gpSet->sStatusFontFace);
