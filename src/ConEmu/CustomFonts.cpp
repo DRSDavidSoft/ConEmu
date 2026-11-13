@@ -698,7 +698,7 @@ void CEDC::SelectFont(CFont* font)
 		if (m_BkColor != CLR_INVALID)
 			::SetBkColor(hDC, m_BkColor);
 		if (m_BkMode != -1)
-			::SetBkMode(hDC, m_BkColor);
+			::SetBkMode(hDC, m_BkMode);
 	}
 }
 

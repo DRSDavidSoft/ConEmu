@@ -1997,6 +1997,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				case 49:
 					// Reset
 					m_Owner->gDisplayParm.setBackColor(CONBACKCOLOR(SrvAnsi::GetDefaultAnsiAttr()));
+					m_Owner->gDisplayParm.setExplicitBackground(false);
 					m_Owner->gDisplayParm.setBrightBack(FALSE);
 					m_Owner->gDisplayParm.setBack256(SrvAnsi::clr4b);
 					break;

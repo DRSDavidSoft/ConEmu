@@ -35,6 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DarkMode.h"
 #include "ConEmu.h"
 #include "Options.h"
+#include "VConGroup.h"
+#include "VirtualConsole.h"
 #include "IatHook.h"
 
 
@@ -157,8 +159,19 @@ void CDwmHelper::UpdateWindowBackdrop(bool refresh)
 		if (effects)
 			requested = gpSet->windowBackdrop;
 	}
+	// A classic console reports palette indices but cannot distinguish SGR 49
+	// from an explicit color with the same index. Keep its client area solid.
+	bool terminalBackdrop = false;
+	if (requested)
+	{
+		// The extended frame covers the whole window, including all split panes.
+		CVConGroup::EnumVCon(evf_Visible, [&](CVirtualConsole* vcon, LPARAM) {
+			terminalBackdrop = vcon->SupportsTerminalBackdrop();
+			return terminalBackdrop;
+		}, 0);
+	}
 	const int bottom = requested && gpSet->isStatusBarShow ? gpSet->StatusBarHeight() : 0;
-	if (!refresh && requested == windowBackdrop_ && bottom == backdropMargin_)
+	if (!refresh && requested == windowBackdrop_ && terminalBackdrop == terminalBackdrop_ && bottom == backdropMargin_)
 		return;
 
 	updatingBackdrop_ = true;
@@ -168,17 +181,20 @@ void CDwmHelper::UpdateWindowBackdrop(bool refresh)
 		requested = 0;
 
 	windowBackdrop_ = requested;
+	terminalBackdrop_ = requested && terminalBackdrop;
 	backdropMargin_ = requested ? bottom : 0;
 	if (!ExtendWindowFrame())
 	{
 		windowBackdrop_ = 0;
+		terminalBackdrop_ = false;
 		backdropMargin_ = 0;
 		material = 1;
 		dwm._DwmSetWindowAttribute(ghWnd, systemBackdropType, &material, sizeof(material));
 		ExtendWindowFrame();
 	}
 	UpdateConsoleCaptionColors(ghWnd);
-	RedrawWindow(ghWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE);
+	CVConGroup::Update(true);
+	RedrawWindow(ghWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ALLCHILDREN);
 	updatingBackdrop_ = false;
 }
 
@@ -656,7 +672,8 @@ bool CDwmHelper::ExtendWindowFrame()
 	//dwmm.cyTopHeight = GetDwmClientRectTopOffset();
 	////dwmm.cyBottomHeight = 0;
 
-	RECT rcMargins = {0, GetDwmClientRectTopOffset(), 0, backdropMargin_};
+	RECT rcMargins = terminalBackdrop_
+		? RECT{-1, -1, -1, -1} : RECT{0, GetDwmClientRectTopOffset(), 0, backdropMargin_};
 
 	return ExtendWindowFrame(ghWnd, rcMargins);
 }
