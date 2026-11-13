@@ -1,4 +1,4 @@
-﻿
+
 /*
 Copyright (c) 2009-present Maximus5
 All rights reserved.
@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
+#include "DarkMode.h"
 #include "version.h"
 
 #include <commctrl.h>
@@ -2046,66 +2047,13 @@ INT_PTR CSettings::ProcessTipHelp(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 
 static COLORREF SettingsBackground(bool field)
 {
-	return CDwmHelper::BlendColors(field ? RGB(40, 40, 40) : RGB(28, 28, 28),
-		CDwmHelper::WindowsAccentColor(), 18);
-}
-
-static BOOL CALLBACK ApplySettingsThemeToControl(HWND control, LPARAM darkParam)
-{
-	const bool useDark = darkParam != 0;
-	wchar_t cls[32] = {};
-	GetClassNameW(control, cls, countof(cls));
-	const bool tree = _wcsicmp(cls, WC_TREEVIEWW) == 0;
-	const bool list = _wcsicmp(cls, WC_LISTVIEWW) == 0;
-	const bool combo = _wcsicmp(cls, L"ComboBox") == 0 || _wcsicmp(cls, L"Edit") == 0;
-	const bool button = _wcsicmp(cls, L"Button") == 0;
-	const bool hotkey = _wcsicmp(cls, HOTKEY_CLASSW) == 0;
-	const bool tabs = _wcsicmp(cls, WC_TABCONTROLW) == 0;
-	const bool listBox = _wcsicmp(cls, L"ListBox") == 0;
-	const bool scrollingEdit = _wcsicmp(cls, L"Edit") == 0
-		&& (GetWindowLongPtr(control, GWL_STYLE) & (WS_HSCROLL | WS_VSCROLL));
-	const bool modernTheme = gOSVer.dwBuildNumber >= 26300;
-	if (tree || list || combo || button || hotkey || listBox || tabs
-		|| _wcsicmp(cls, L"ScrollBar") == 0 || _wcsicmp(cls, TRACKBAR_CLASSW) == 0)
-	{
-		LPCWSTR theme = nullptr;
-		if (useDark)
-		{
-			theme = combo ? L"DarkMode_CFD" : L"DarkMode_Explorer";
-			if (modernTheme && (button || hotkey || listBox || scrollingEdit || tabs))
-				theme = L"DarkMode_DarkTheme";
-		}
-		gpConEmu->SetWindowTheme(control, theme, nullptr);
-	}
-
-	const auto bg = useDark ? SettingsBackground(true) : GetSysColor(COLOR_WINDOW);
-	const auto fg = useDark ? RGB(240, 240, 240) : GetSysColor(COLOR_WINDOWTEXT);
-	if (tree)
-	{
-		TreeView_SetBkColor(control, bg);
-		TreeView_SetTextColor(control, fg);
-		TreeView_SetLineColor(control, useDark ? RGB(128, 128, 128) : CLR_DEFAULT);
-	}
-	if (list)
-	{
-		ListView_SetBkColor(control, bg);
-		ListView_SetTextBkColor(control, bg);
-		ListView_SetTextColor(control, fg);
-		if (const auto header = ListView_GetHeader(control))
-			gpConEmu->SetWindowTheme(header, useDark
-				? (modernTheme ? L"DarkMode_DarkTheme" : L"DarkMode_ItemsView") : nullptr, nullptr);
-	}
-	return TRUE;
+	return field ? DarkMode::Control : DarkMode::Background;
 }
 
 void CSettings::ApplySettingsTheme(HWND dialog)
 {
 	gpConEmu->ApplyPopupMenuTheme(dialog);
-	const bool dark = CDwmHelper::IsWindowsDarkMode();
-	if (dark && (GetWindowLongPtr(dialog, GWL_STYLE) & (WS_CHILD | WS_CAPTION)) == WS_CAPTION)
-		gpConEmu->EnableDarkCaption(dialog);
-	EnumChildWindows(dialog, ApplySettingsThemeToControl, dark);
-	RedrawWindow(dialog, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
+	DarkMode::ApplyDialog(dialog);
 }
 
 INT_PTR CSettings::SettingsThemeBrush(UINT message, HDC dc, HWND control, bool hyperlink)
@@ -2143,6 +2091,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 	}
 
 	PatchMsgBoxIcon(hWnd2, messg, wParam, lParam);
+	if (DarkMode::ProcessDialogMessage(hWnd2, messg, wParam, lParam, lRc)) return lRc;
 
 	switch (messg)
 	{
@@ -2427,7 +2376,7 @@ INT_PTR CSettings::OnCtlColorStatic(HWND hDlg, HDC hdc, HWND hCtrl, WORD nCtrlId
 		return reinterpret_cast<INT_PTR>(hBrush);
 	}
 
-	return FALSE;
+	return reinterpret_cast<INT_PTR>(DarkMode::ControlColor(hCtrl, hdc, WM_CTLCOLORSTATIC));
 }
 
 INT_PTR CSettings::OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)

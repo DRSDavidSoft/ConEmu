@@ -1,4 +1,4 @@
-﻿
+
 /*
 Copyright (c) 2016-present Maximus5
 All rights reserved.
@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
+#include "DarkMode.h"
 #include "../common/MSetter.h"
 
 #include "ConEmu.h"
@@ -162,7 +163,7 @@ INT_PTR CSetPgBase::OnCtlColorStatic(HWND hDlg, HDC hdc, HWND hCtrl, WORD nCtrlI
 	return (INT_PTR)hBrush;
 	*/
 
-	return FALSE;
+	return reinterpret_cast<INT_PTR>(DarkMode::ControlColor(hCtrl, hdc, WM_CTLCOLORSTATIC));
 }
 
 INT_PTR CSetPgBase::OnSetCursor(HWND hDlg, HWND hCtrl, WORD nCtrlId, WORD nHitTest, WORD nMouseMsg)
@@ -191,6 +192,8 @@ INT_PTR CSetPgBase::OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId)
 // Общая DlgProc на _все_ вкладки
 INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+	INT_PTR darkResult = 0;
+	if (DarkMode::ProcessDialogMessage(hDlg, messg, wParam, lParam, darkResult)) return darkResult;
 	TabHwndIndex pgId = thi_Last;
 	CSetPgBase* pObj = nullptr;
 
@@ -281,8 +284,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 		}
 
 		pObj->OnPostLocalize(hDlg);
-		if (bInitial)
-			CSettings::ApplySettingsTheme(hDlg);
+		CSettings::ApplySettingsTheme(hDlg);
 
 	}
 	else if ((messg == WM_HELP) || (messg == HELP_WM_HELP))
