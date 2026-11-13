@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 
 #include "SetPgTransparent.h"
+#include "ConEmu.h"
 
 CSetPgTransparent::CSetPgTransparent()
 {
@@ -44,6 +45,14 @@ CSetPgTransparent::~CSetPgTransparent()
 
 LRESULT CSetPgTransparent::OnInitDialog(HWND hDlg, bool abInitial)
 {
+	if (abInitial)
+	{
+		for (const auto name : {L"Solid", L"Mica", L"Acrylic", L"Mica Alt"})
+			SendDlgItemMessage(hDlg, lbWindowBackdrop, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(name));
+	}
+	SendDlgItemMessage(hDlg, lbWindowBackdrop, CB_SETCURSEL, gpSet->windowBackdrop, 0);
+	EnableWindow(GetDlgItem(hDlg, lbWindowBackdrop), gpConEmu->SupportsWindowBackdrop());
+
 	// +Color key
 	ColorSetEdit(hDlg, c38);
 
@@ -61,5 +70,19 @@ LRESULT CSetPgTransparent::OnInitDialog(HWND hDlg, bool abInitial)
 	checkDlgButton(hDlg, cbUserScreenTransparent, gpSet->isUserScreenTransparent ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hDlg, cbColorKeyTransparent, gpSet->isColorKeyTransparent);
 
+	return 0;
+}
+
+INT_PTR CSetPgTransparent::OnComboBox(HWND hDlg, WORD id, WORD code)
+{
+	if (id != lbWindowBackdrop || code != CBN_SELCHANGE)
+		return CSetPgBase::OnComboBox(hDlg, id, code);
+
+	const auto selection = SendDlgItemMessage(hDlg, id, CB_GETCURSEL, 0, 0);
+	if (selection >= 0 && selection <= 3)
+	{
+		gpSet->windowBackdrop = static_cast<BYTE>(selection);
+		gpConEmu->UpdateWindowBackdrop();
+	}
 	return 0;
 }
