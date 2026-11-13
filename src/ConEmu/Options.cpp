@@ -599,6 +599,7 @@ void Settings::InitSettings()
 	bgOperation = eUpLeft;
 	isBgPluginAllowed = 1;
 	nTransparent = nTransparentInactive = 255;
+	windowBackdrop = 0;
 	isTransparentSeparate = false;
 	//isColorKey = false;
 	//ColorKey = RGB(1,1,1);
@@ -2812,6 +2813,8 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"bgPluginAllowed", isBgPluginAllowed);
 		if (isBgPluginAllowed!=0 && isBgPluginAllowed!=1 && isBgPluginAllowed!=2) isBgPluginAllowed = 1;
 
+		reg->Load(L"WindowBackdrop", windowBackdrop);
+		if (windowBackdrop > 3) windowBackdrop = 0;
 		reg->Load(L"AlphaValue", nTransparent); MinMax(nTransparent, MIN_ALPHA_VALUE, 255);
 		reg->Load(L"AlphaValueSeparate", isTransparentSeparate);
 		if (!reg->Load(L"AlphaValueInactive", nTransparentInactive))
@@ -3722,6 +3725,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"bgImageColors", nBgImageColors);
 		reg->Save(L"bgOperation", bgOperation);
 		reg->Save(L"bgPluginAllowed", isBgPluginAllowed);
+		reg->Save(L"WindowBackdrop", windowBackdrop);
 		reg->Save(L"AlphaValue", nTransparent);
 		reg->Save(L"AlphaValueSeparate", isTransparentSeparate);
 		reg->Save(L"AlphaValueInactive", nTransparentInactive);

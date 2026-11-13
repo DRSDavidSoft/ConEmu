@@ -470,6 +470,7 @@ bool CFrameHolder::OnDwmCompositionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, 
 	DBGFUNCTION("WM_DWMCOMPOSITIONCHANGED");
 	if (gpSet->isLogging(2)) LogString(L"WM_DWMCOMPOSITIONCHANGED - begin");
 	lResult = DoDwmMessage(hWnd, uMsg, wParam, lParam);
+	gpConEmu->UpdateWindowBackdrop(true);
 	if (gpSet->isLogging(2)) LogString(L"WM_DWMCOMPOSITIONCHANGED - end");
 	return true;
 }

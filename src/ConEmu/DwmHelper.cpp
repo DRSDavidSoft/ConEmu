@@ -114,7 +114,8 @@ bool CDwmHelper::UpdateConsoleCaptionColors(HWND window)
 
 	COLORREF background = DefaultCaptionColor;
 	COLORREF foreground = DefaultCaptionColor;
-	DarkMode::GetConsoleChromeColors(background, foreground);
+	if (!IsWindowBackdropActive())
+		DarkMode::GetConsoleChromeColors(background, foreground);
 	if (background == captionBackground_ && foreground == captionForeground_)
 		return false;
 
@@ -128,6 +129,57 @@ bool CDwmHelper::UpdateConsoleCaptionColors(HWND window)
 	captionBackground_ = background;
 	captionForeground_ = foreground;
 	return true;
+}
+
+bool CDwmHelper::SupportsWindowBackdrop() const
+{
+	return global::g_buildNumber >= 22621 && dwm._DwmSetWindowAttribute && dwm._DwmExtendFrameIntoClientArea;
+}
+
+void CDwmHelper::UpdateWindowBackdrop(bool refresh)
+{
+	if (!ghWnd || !gpSet || !SupportsWindowBackdrop())
+		return;
+	if (!gpSet->windowBackdrop && !windowBackdrop_)
+		return;
+
+	if (updatingBackdrop_)
+		return;
+
+	BYTE requested = 0;
+	DWORD effects = 1, size = sizeof(effects);
+	if (gpSet->windowBackdrop <= 3 && gpSet->windowBackdrop && !IsHighContrast()
+		&& IsDwm() && !gpConEmu->isInside() && !gpSet->isUserScreenTransparent && !gpSet->isQuakeStyle
+		&& !(GetWindowLongPtr(ghWnd, GWL_EXSTYLE) & WS_EX_LAYERED))
+	{
+		RegGetValueW(HKEY_CURRENT_USER, L"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
+			L"EnableTransparency", RRF_RT_REG_DWORD, nullptr, &effects, &size);
+		if (effects)
+			requested = gpSet->windowBackdrop;
+	}
+	const int bottom = requested && gpSet->isStatusBarShow ? gpSet->StatusBarHeight() : 0;
+	if (!refresh && requested == windowBackdrop_ && bottom == backdropMargin_)
+		return;
+
+	updatingBackdrop_ = true;
+	constexpr DWORD systemBackdropType = 38; // DWMWA_SYSTEMBACKDROP_TYPE
+	DWORD material = 1 + requested; // None, MainWindow, TransientWindow, TabbedWindow
+	if (FAILED(dwm._DwmSetWindowAttribute(ghWnd, systemBackdropType, &material, sizeof(material))))
+		requested = 0;
+
+	windowBackdrop_ = requested;
+	backdropMargin_ = requested ? bottom : 0;
+	if (!ExtendWindowFrame())
+	{
+		windowBackdrop_ = 0;
+		backdropMargin_ = 0;
+		material = 1;
+		dwm._DwmSetWindowAttribute(ghWnd, systemBackdropType, &material, sizeof(material));
+		ExtendWindowFrame();
+	}
+	UpdateConsoleCaptionColors(ghWnd);
+	RedrawWindow(ghWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE);
+	updatingBackdrop_ = false;
 }
 
 bool IsColorSchemeChangeMessage(LPARAM lParam)
@@ -604,7 +656,7 @@ bool CDwmHelper::ExtendWindowFrame()
 	//dwmm.cyTopHeight = GetDwmClientRectTopOffset();
 	////dwmm.cyBottomHeight = 0;
 
-	RECT rcMargins = {0, GetDwmClientRectTopOffset()};
+	RECT rcMargins = {0, GetDwmClientRectTopOffset(), 0, backdropMargin_};
 
 	return ExtendWindowFrame(ghWnd, rcMargins);
 }
