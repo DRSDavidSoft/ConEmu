@@ -82,6 +82,8 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #include "VConText.h"
 #include "VirtualConsole.h"
 
+#include <map>
+
 
 #include "LngRc.h"
 #include "../common/MSetter.h"
@@ -2801,6 +2803,7 @@ void CVirtualConsole::UpdateText()
 
 	std::vector<RECT> opaqueRuns;
 	std::vector<BackdropTextRun> backdropText;
+	std::map<HFONT, HFONT> backdropFonts;
 
 	int pos = 0, row = 0;
 	// max vertical coordinate of line allowed
@@ -3034,6 +3037,27 @@ void CVirtualConsole::UpdateText()
 				charSet = nFontCharSet;
 			}
 
+			HGDIOBJ previousFont = nullptr;
+			if (backdrop && !graphics)
+			{
+				// Even opaque cells are composed into the glass surface. Use
+				// grayscale antialiasing for all terminal text in this mode.
+				const HDC dc = m_DC;
+				const auto selected = static_cast<HFONT>(GetCurrentObject(dc, OBJ_FONT));
+				auto entry = backdropFonts.emplace(selected, nullptr);
+				if (entry.second)
+				{
+					LOGFONTW lf = {};
+					if (GetObjectW(selected, sizeof(lf), &lf) && lf.lfQuality != NONANTIALIASED_QUALITY)
+					{
+						lf.lfQuality = ANTIALIASED_QUALITY;
+						entry.first->second = CreateFontIndirectW(&lf);
+					}
+				}
+				if (entry.first->second)
+					previousFont = SelectObject(dc, entry.first->second);
+			}
+
 			const unsigned nRightEx = std::max((unsigned)1, (unsigned)m_Sizes.nFontWidth / 4);
 			rect.left = part->PositionX;
 			rect.top = pos;
@@ -3108,6 +3132,8 @@ void CVirtualConsole::UpdateText()
 				m_DC.TextDraw(rect.left, rect.top, nFlags, &rect,
 					part->Chars, part->Length, (int*)part->CharWidth/*lpDX*/);
 			}
+			if (previousFont)
+				SelectObject(m_DC, previousFont);
 		}
 
 		if (rect.right < (int)m_Sizes.Width)
@@ -3148,11 +3174,16 @@ void CVirtualConsole::UpdateText()
 			DeleteObject(hBr);
 	}
 
+	for (const auto& font : backdropFonts)
+		if (font.second)
+			DeleteObject(font.second);
+
 	std::vector<ConPtyGlyph> graphemes;
 	if (mp_RCon->GetConPtyGlyphs(m_Sizes.TextWidth, m_Sizes.TextHeight, graphemes) && !graphemes.empty())
 	{
 		const HFONT emojiFont = CreateFontW(-m_Sizes.nFontHeight, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
-			DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI Emoji");
+			DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, backdrop ? ANTIALIASED_QUALITY : CLEARTYPE_QUALITY,
+			DEFAULT_PITCH, L"Segoe UI Emoji");
 		for (const auto& glyph : graphemes)
 		{
 			const unsigned cell = glyph.position.Y * m_Sizes.TextWidth + glyph.position.X;
