@@ -6490,6 +6490,7 @@ void CConEmuSize::DoFullScreen()
 		mp_ConEmu->SetWindowMode(mp_ConEmu->isWndNotFSMaximized ? wmMaximized : wmNormal);
 }
 
+
 void CConEmuSize::DoMaximizeRestore()
 {
 	// abPosted - removed, all calls was as TRUE

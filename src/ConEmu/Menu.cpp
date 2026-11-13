@@ -1191,7 +1191,7 @@ int CConEmuMenu::FillTaskPopup(HMENU hMenu, CmdTaskPopupItem* pParent)
 
 		wchar_t *pszDataW = pParent->pszTaskBuf.data();
 		wchar_t *pszLine = pszDataW;
-		
+
 		while (*pszLine && (nCount < MAX_CONSOLE_COUNT))
 		{
 			pszLine = const_cast<wchar_t*>(SkipNonPrintable(pszLine));

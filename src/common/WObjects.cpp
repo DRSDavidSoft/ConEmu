@@ -918,6 +918,16 @@ bool IsWin10()
 	return (ibIsWin10 == 1);
 }
 
+constexpr bool CheckBuildNumber(DWORD buildNumber)
+{
+	return (buildNumber == 17763 || // 1809
+		buildNumber == 18362 || // 1903
+		buildNumber == 18363 || // 1909
+		buildNumber == 19041 || // 2004
+		buildNumber == 22000 || // win11
+		buildNumber == 22621); //
+}
+
 // Returns true for CJK versions of Windows (Chinese, Japanese, etc.)
 // Their consoles behave in different way than European versions unfortunately
 bool IsWinDBCS()

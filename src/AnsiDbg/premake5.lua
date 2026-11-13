@@ -8,7 +8,7 @@ workspace "AnsiDbg"
     defines { "WIN32", "_WIN32" }
 
   filter "action:vs2017"
-    toolset "v141_xp"
+    toolset "v143"
   filter "action:vs2015"
     toolset "v140_xp"
   filter "action:vs2013"
