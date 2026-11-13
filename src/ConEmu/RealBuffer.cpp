@@ -530,11 +530,14 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 			*pszDst = (ch < 32) ? gszAnalogues[(WORD)ch] : ch;
 
 			*pcaDst = lcaTableOrg[ptrSrc->Attributes & 0xFF];
+			pcaDst->ConAttr = ptrSrc->Attributes;
 			if (n < frozenColors.size())
 			{
 				const auto& color = frozenColors[n];
 				if (color.fg_valid) pcaDst->crForeColor = color.fg_color;
 				if (color.bk_valid) pcaDst->crBackColor = color.bk_color;
+				if (color.bk_valid || (color.style & (AI_STYLE_EXPLICIT_BG | AI_STYLE_REVERSE)))
+					pcaDst->Flags |= CharAttr_OpaqueBackground;
 				if (color.style & AI_STYLE_REVERSE) { const unsigned fore = pcaDst->crForeColor; pcaDst->crForeColor = pcaDst->crBackColor; pcaDst->crBackColor = fore; }
 				pcaDst->nFontIndex = color.style & fnt_StdFontMask;
 			}
@@ -6419,7 +6422,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 					#if 0
 					pcaDst->bTransparent = FALSE;
 					#else
-					pcaDst->Flags &= ~CharAttr_Transparent;
+					pcaDst->Flags = (pcaDst->Flags & ~CharAttr_Transparent) | CharAttr_OpaqueBackground;
 					#endif
 					pcaDst->nFontIndex = 0;
 				}

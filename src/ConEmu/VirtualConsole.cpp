@@ -294,7 +294,6 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	, mb_ConDataChanged(false)
 	, mh_TransparentRgn(nullptr)
 	, mb_ChildWindowWasFound(false)
-	, mn_BackColorIdx(RELEASEDEBUGTEST(0/*Black*/,2/*Green*/))
 	, Cursor()
 	, mb_PaintSkippedLogged(false)
 	, isForce(true)
@@ -2722,6 +2721,59 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 }
 
 
+namespace
+{
+struct BackdropTextRun
+{
+	RECT bounds;
+	COLORREF color;
+};
+
+void BlendBackdropText(COLORREF* pixels, int stride, const BackdropTextRun& run)
+{
+	const auto red = GetRValue(run.color);
+	const auto green = GetGValue(run.color);
+	const auto blue = GetBValue(run.color);
+	for (LONG y = run.bounds.top; y < run.bounds.bottom; ++y)
+	{
+		auto* row = pixels + y * stride;
+		for (LONG x = run.bounds.left; x < run.bounds.right; ++x)
+		{
+			const auto mask = row[x];
+			if (!mask)
+				continue;
+
+			// GDI draws a white glyph on black. Collapse ClearType's
+			// channel coverage to a single alpha before applying the
+			// foreground so subpixel colors never reach the compositor.
+			const DWORD alpha = (((mask >> 16) & 255) + ((mask >> 8) & 255) + (mask & 255) + 1) / 3;
+			row[x] = (alpha << 24) | ((red * alpha / 255) << 16)
+				| ((green * alpha / 255) << 8) | (blue * alpha / 255);
+		}
+	}
+}
+
+void MakeBackdropRunOpaque(COLORREF* pixels, int stride, const RECT& bounds)
+{
+	for (LONG y = bounds.top; y < bounds.bottom; ++y)
+	{
+		auto* row = pixels + y * stride;
+		for (LONG x = bounds.left; x < bounds.right; ++x)
+			row[x] |= 0xFF000000;
+	}
+}
+}
+
+bool CVirtualConsole::SupportsTerminalBackdrop() const
+{
+	return !gbNoDblBuffer && m_DC.pPixels && !drawImage && mp_RCon->IsConPty();
+}
+
+bool CVirtualConsole::UsesTerminalBackdrop() const
+{
+	return gpConEmu->IsTerminalBackdropActive() && SupportsTerminalBackdrop();
+}
+
 void CVirtualConsole::UpdateText()
 {
 	_ASSERTE((HDC)m_DC!=nullptr);
@@ -2738,6 +2790,18 @@ void CVirtualConsole::UpdateText()
 	CharAttr* ConAttrLine = mpn_ConAttrEx;
 	DWORD* ConCharXLine = ConCharX;
 	// counters
+	const bool backdrop = UsesTerminalBackdrop();
+	const int backgroundIndex = mp_RCon->GetDefaultBackColorIdx();
+	const auto isDefaultBackground = [&](const CharAttr& attr) {
+		return backdrop && attr.nBackIdx == backgroundIndex
+			&& attr.crBackColor == m_Colors[backgroundIndex]
+			&& !(attr.ConAttr & COMMON_LVB_REVERSE_VIDEO)
+			&& !(attr.Flags & (CharAttr_OpaqueBackground | CharAttr_DialogPanel | CharAttr_DialogRect | CharAttr_DialogVBorder));
+	};
+
+	std::vector<RECT> opaqueRuns;
+	std::vector<BackdropTextRun> backdropText;
+
 	int pos = 0, row = 0;
 	// max vertical coordinate of line allowed
 	int nMaxPos = m_Sizes.Height - m_Sizes.nFontHeight;
@@ -2878,6 +2942,8 @@ void CVirtualConsole::UpdateText()
 		lp.PolishParts(ConCharXLine);
 
 		RECT rect = {};
+		opaqueRuns.clear();
+		backdropText.clear();
 
 		// Do first run to paint only background (background image support)
 		partIndex = 0;
@@ -2896,6 +2962,7 @@ void CVirtualConsole::UpdateText()
 				while (nextPart
 					&& (nextPart->Attrs[0].crBackColor == attr.crBackColor)
 					&& (nextPart->Attrs[0].nBackIdx == attr.nBackIdx)
+					&& (isDefaultBackground(nextPart->Attrs[0]) == isDefaultBackground(attr))
 					)
 				{
 					if (!lp.GetNextPart(partIndex, part, nextPart))
@@ -2923,6 +2990,10 @@ void CVirtualConsole::UpdateText()
 				continue;
 			}
 
+			if (backdrop && !isDefaultBackground(attr))
+				opaqueRuns.push_back({rect.left, rect.top,
+					std::min(rect.right, static_cast<LONG>(m_Sizes.Width)), rect.bottom});
+
 			// Fill the space with background (erase previously printed text)
 			if (drawImage && ISBGIMGCOLOR(attr.nBackIdx))
 			{
@@ -2930,7 +3001,8 @@ void CVirtualConsole::UpdateText()
 			}
 			else
 			{
-				HBRUSH hbr = PartBrush(L' ', attr.crBackColor, attr.crForeColor);
+				HBRUSH hbr = isDefaultBackground(attr) ? static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH))
+					: PartBrush(L' ', attr.crBackColor, attr.crForeColor);
 				FillRect((HDC)m_DC, &rect, hbr);
 			}
 
@@ -2947,8 +3019,10 @@ void CVirtualConsole::UpdateText()
 		while (lp.GetNextPart(partIndex, part, nextPart))
 		{
 			const CharAttr& attr = part->Attrs[0];
-			m_DC.SetBkColor(attr.crBackColor);
-			m_DC.SetTextColor(attr.crForeColor);
+			const bool graphics = bEnhanceGraphics && (part->Flags & (TRF_TextProgress | TRF_TextTriangles));
+			const bool useMask = isDefaultBackground(attr) && !graphics;
+			m_DC.SetBkColor(useMask ? RGB(0, 0, 0) : attr.crBackColor);
+			m_DC.SetTextColor(useMask ? RGB(255, 255, 255) : attr.crForeColor);
 			if (part->Flags & TRF_TextAlternative)
 			{
 				SelectFont(fnt_Alternative);
@@ -2966,11 +3040,20 @@ void CVirtualConsole::UpdateText()
 			// For Bold and Italic we slightly extend drawing rect to avoid clipping
 			// Old note: if nextPart is VertBorder, then increase rect.right by ((FontWidth>>1)-1)
 			// Old note: to ensure, that our possible *italic* text will not be clipped
-			if (attr.nFontIndex & 3)
+			if (!backdrop && (attr.nFontIndex & 3))
 				rect.right = std::min((unsigned)part->PositionX + part->TotalWidth + nRightEx, m_Sizes.Width);
 			else
 				rect.right = part->PositionX + part->TotalWidth;
 			rect.bottom = rect.top + m_Sizes.nFontHeight;
+
+
+			if (backdrop)
+				rect.right = std::min(rect.right, static_cast<LONG>(m_Sizes.Width));
+
+			if (useMask)
+				backdropText.push_back({rect, attr.crForeColor});
+			else if (backdrop && graphics)
+				opaqueRuns.push_back(rect);
 
 			UINT nFlags = ETO_CLIPPED;
 
@@ -3041,6 +3124,15 @@ void CVirtualConsole::UpdateText()
 				DeleteObject(hBr);
 		}
 
+		if (backdrop)
+		{
+			GdiFlush();
+			for (const auto& run : backdropText)
+				BlendBackdropText(m_DC.pPixels, m_DC.iWidth, run);
+			for (const auto& run : opaqueRuns)
+				MakeBackdropRunOpaque(m_DC.pPixels, m_DC.iWidth, run);
+		}
+
 		HEAPVALPTR(nDX);
 	}
 
@@ -3066,9 +3158,20 @@ void CVirtualConsole::UpdateText()
 			const unsigned cell = glyph.position.Y * m_Sizes.TextWidth + glyph.position.X;
 			const auto& attr = mpn_ConAttrEx[cell];
 			const RECT rect = {glyph.position.X * m_Sizes.nFontWidth, glyph.position.Y * m_Sizes.nFontHeight,
-				(glyph.position.X + static_cast<int>(glyph.width)) * m_Sizes.nFontWidth,
-				(glyph.position.Y + 1) * m_Sizes.nFontHeight};
-			DrawConPtyGrapheme(m_DC, rect, glyph.text, attr.crForeColor, attr.crBackColor, m_Sizes.nFontHeight, emojiFont);
+				std::min<LONG>((glyph.position.X + static_cast<int>(glyph.width)) * m_Sizes.nFontWidth, m_Sizes.Width),
+				std::min<LONG>((glyph.position.Y + 1) * m_Sizes.nFontHeight, m_Sizes.Height)};
+			if (IsRectEmpty(&rect))
+				continue;
+			const bool useMask = isDefaultBackground(attr);
+			if (DrawConPtyGrapheme(m_DC, rect, glyph.text, useMask ? RGB(255, 255, 255) : attr.crForeColor,
+				useMask ? RGB(0, 0, 0) : attr.crBackColor, m_Sizes.nFontHeight, emojiFont) && backdrop)
+			{
+				GdiFlush();
+				if (useMask)
+					BlendBackdropText(m_DC.pPixels, m_DC.iWidth, {rect, attr.crForeColor});
+				else
+					MakeBackdropRunOpaque(m_DC.pPixels, m_DC.iWidth, rect);
+			}
 		}
 		if (emojiFont) DeleteObject(emojiFont);
 	}
@@ -3607,6 +3710,11 @@ bool CVirtualConsole::StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWid
 	return bPaintRC;
 }
 
+COLORREF CVirtualConsole::GetTerminalBackground() const
+{
+	return UsesTerminalBackdrop() ? RGB(0, 0, 0) : m_Colors[mp_RCon->GetDefaultBackColorIdx()];
+}
+
 HBRUSH CVirtualConsole::CreateBackBrush(bool bGuiVisible, bool& rbNonSystem)
 {
 	HBRUSH hBr = nullptr;
@@ -3618,13 +3726,7 @@ HBRUSH CVirtualConsole::CreateBackBrush(bool bGuiVisible, bool& rbNonSystem)
 	}
 	else
 	{
-		// Fill with coloridx 0
-		const int nBackColorIdx = mp_RCon->GetDefaultBackColorIdx(); // Black
-		//#ifdef _DEBUG
-		//nBackColorIdx = 2; // Green
-		//#endif
-
-		hBr = CreateSolidBrush(m_Colors[nBackColorIdx]);
+		hBr = CreateSolidBrush(GetTerminalBackground());
 		rbNonSystem = (hBr != nullptr);
 	}
 
@@ -3889,7 +3991,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 
 	if (((ULONG)(client.right-client.left)) > m_Sizes.Width)
 	{
-		if (!hBr) hBr = CreateSolidBrush(m_Colors[mn_BackColorIdx]);
+		if (!hBr) hBr = CreateSolidBrush(GetTerminalBackground());
 
 		RECT rcFill = MakeRect(client.left + m_Sizes.Width, client.top, client.right, client.bottom);
 #ifndef SKIP_ALL_FILLRECT
@@ -3900,7 +4002,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 
 	if (((ULONG)(client.bottom-client.top)) > m_Sizes.Height)
 	{
-		if (!hBr) hBr = CreateSolidBrush(m_Colors[mn_BackColorIdx]);
+		if (!hBr) hBr = CreateSolidBrush(GetTerminalBackground());
 
 		RECT rcFill = MakeRect(client.left, client.top + m_Sizes.Height, client.right, client.bottom);
 #ifndef SKIP_ALL_FILLRECT

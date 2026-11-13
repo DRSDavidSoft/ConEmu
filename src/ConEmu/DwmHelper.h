@@ -182,6 +182,7 @@ public:
 	bool UpdateConsoleCaptionColors(HWND window);
 	bool SupportsWindowBackdrop() const;
 	bool IsWindowBackdropActive() const { return windowBackdrop_ != 0; }
+	bool IsTerminalBackdropActive() const { return terminalBackdrop_; }
 	void UpdateWindowBackdrop(bool refresh = false);
 	void EnableBlurBehind(bool abBlurBehindClient);
 	bool ExtendWindowFrame();
@@ -215,6 +216,7 @@ public:
 private:
 	bool updatingBackdrop_ = false;
 	BYTE windowBackdrop_ = 0;
+	bool terminalBackdrop_ = false;
 	int backdropMargin_ = 0;
 	static constexpr COLORREF DefaultCaptionColor = 0xFFFFFFFF;
 	COLORREF captionBackground_ = DefaultCaptionColor;

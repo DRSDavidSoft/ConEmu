@@ -108,6 +108,7 @@ struct Attribute
 
 		// #condata Not supported yet, reserved
 		fReversed = 0x00001000,
+		fExplicitBackground = 0x00002000,
 
 		/// row was '`n'-terminated
 		fWasLF = 0x00010000,
