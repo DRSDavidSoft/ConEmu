@@ -35,6 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DarkMode.h"
 #include "ConEmu.h"
 #include "Options.h"
+#include "VConGroup.h"
+#include "VirtualConsole.h"
 #include "IatHook.h"
 
 
@@ -114,7 +116,8 @@ bool CDwmHelper::UpdateConsoleCaptionColors(HWND window)
 
 	COLORREF background = DefaultCaptionColor;
 	COLORREF foreground = DefaultCaptionColor;
-	DarkMode::GetConsoleChromeColors(background, foreground);
+	if (!IsWindowBackdropActive())
+		DarkMode::GetConsoleChromeColors(background, foreground);
 	if (background == captionBackground_ && foreground == captionForeground_)
 		return false;
 
@@ -128,6 +131,71 @@ bool CDwmHelper::UpdateConsoleCaptionColors(HWND window)
 	captionBackground_ = background;
 	captionForeground_ = foreground;
 	return true;
+}
+
+bool CDwmHelper::SupportsWindowBackdrop() const
+{
+	return global::g_buildNumber >= 22621 && dwm._DwmSetWindowAttribute && dwm._DwmExtendFrameIntoClientArea;
+}
+
+void CDwmHelper::UpdateWindowBackdrop(bool refresh)
+{
+	if (!ghWnd || !gpSet || !SupportsWindowBackdrop())
+		return;
+	if (!gpSet->windowBackdrop && !windowBackdrop_)
+		return;
+
+	if (updatingBackdrop_)
+		return;
+
+	BYTE requested = 0;
+	DWORD effects = 1, size = sizeof(effects);
+	if (gpSet->windowBackdrop <= 3 && gpSet->windowBackdrop && !IsHighContrast()
+		&& IsDwm() && !gpConEmu->isInside() && !gpSet->isUserScreenTransparent && !gpSet->isQuakeStyle
+		&& !(GetWindowLongPtr(ghWnd, GWL_EXSTYLE) & WS_EX_LAYERED))
+	{
+		RegGetValueW(HKEY_CURRENT_USER, L"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
+			L"EnableTransparency", RRF_RT_REG_DWORD, nullptr, &effects, &size);
+		if (effects)
+			requested = gpSet->windowBackdrop;
+	}
+	// A classic console reports palette indices but cannot distinguish SGR 49
+	// from an explicit color with the same index. Keep its client area solid.
+	bool terminalBackdrop = false;
+	if (requested)
+	{
+		// The extended frame covers the whole window, including all split panes.
+		CVConGroup::EnumVCon(evf_Visible, [&](CVirtualConsole* vcon, LPARAM) {
+			terminalBackdrop = vcon->SupportsTerminalBackdrop();
+			return terminalBackdrop;
+		}, 0);
+	}
+	const int bottom = requested && gpSet->isStatusBarShow ? gpSet->StatusBarHeight() : 0;
+	if (!refresh && requested == windowBackdrop_ && terminalBackdrop == terminalBackdrop_ && bottom == backdropMargin_)
+		return;
+
+	updatingBackdrop_ = true;
+	constexpr DWORD systemBackdropType = 38; // DWMWA_SYSTEMBACKDROP_TYPE
+	DWORD material = 1 + requested; // None, MainWindow, TransientWindow, TabbedWindow
+	if (FAILED(dwm._DwmSetWindowAttribute(ghWnd, systemBackdropType, &material, sizeof(material))))
+		requested = 0;
+
+	windowBackdrop_ = requested;
+	terminalBackdrop_ = requested && terminalBackdrop;
+	backdropMargin_ = requested ? bottom : 0;
+	if (!ExtendWindowFrame())
+	{
+		windowBackdrop_ = 0;
+		terminalBackdrop_ = false;
+		backdropMargin_ = 0;
+		material = 1;
+		dwm._DwmSetWindowAttribute(ghWnd, systemBackdropType, &material, sizeof(material));
+		ExtendWindowFrame();
+	}
+	UpdateConsoleCaptionColors(ghWnd);
+	CVConGroup::Update(true);
+	RedrawWindow(ghWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ALLCHILDREN);
+	updatingBackdrop_ = false;
 }
 
 bool IsColorSchemeChangeMessage(LPARAM lParam)
@@ -604,7 +672,8 @@ bool CDwmHelper::ExtendWindowFrame()
 	//dwmm.cyTopHeight = GetDwmClientRectTopOffset();
 	////dwmm.cyBottomHeight = 0;
 
-	RECT rcMargins = {0, GetDwmClientRectTopOffset()};
+	RECT rcMargins = terminalBackdrop_
+		? RECT{-1, -1, -1, -1} : RECT{0, GetDwmClientRectTopOffset(), 0, backdropMargin_};
 
 	return ExtendWindowFrame(ghWnd, rcMargins);
 }

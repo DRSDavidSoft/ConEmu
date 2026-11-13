@@ -119,6 +119,7 @@ struct AnnotationInfo
 			#define AI_STYLE_SMALL_CAPS    0x0080
 			#define AI_STYLE_ALL_CAPS      0x0100
 			#define AI_STYLE_REVERSE       0x0200
+			#define AI_STYLE_EXPLICIT_BG   0x0400
 
 		};
 

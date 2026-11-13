@@ -611,6 +611,9 @@ BEGIN
     CONTROL         "‘Color key’ transparency",cbColorKeyTransparent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,100,97,8
     CONTROL         "‘User screen’ transparency (Far Manager feature)",cbUserScreenTransparent,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,116,309,8
+    GROUPBOX        "Window material",stWindowBackdrop,4,138,375,48
+    COMBOBOX        lbWindowBackdrop,8,150,150,70,CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL
+    LTEXT           "Requires Windows 11 22H2 and system transparency effects. Turn off alpha and color-key transparency. Terminal backgrounds require ConPTY.",-1,8,167,356,16
 END
 
 IDD_SETTINGS DIALOGEX 0, 0, 507, 297

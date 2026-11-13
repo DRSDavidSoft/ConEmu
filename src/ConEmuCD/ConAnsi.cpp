@@ -118,8 +118,14 @@ void SrvAnsi::DisplayParm::setText256(const SrvAnsi::cbit val)
 	_Text256 = val;
 	setDirty(true);
 }
+void SrvAnsi::DisplayParm::setExplicitBackground(const bool val)
+{
+	_ExplicitBackground = val;
+	setDirty(true);
+}
 void SrvAnsi::DisplayParm::setBackColor(const int val)
 {
+	_ExplicitBackground = true;
 	_BackColor = val;
 	setDirty(true);
 }
@@ -680,6 +686,8 @@ void SrvAnsi::ReSetDisplayParm(bool bReset, bool bApply)
 				| (gDisplayParm.getBrightBack() ? 0x8 : 0);
 		}
 
+		if (gDisplayParm.getExplicitBackground())
+			attr.flags |= condata::Attribute::fExplicitBackground;
 		GetTable(GetTableEnum::current)->SetAttr(attr);
 	}
 }
