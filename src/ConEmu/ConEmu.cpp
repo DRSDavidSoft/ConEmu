@@ -11961,6 +11961,8 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		CheckTopMostState();
 	}
 
+	if (UpdateConsoleCaptionColors(ghWnd))
+		mp_Status->InvalidateStatusBar();
 	mp_Status->OnTimer();
 
 	CheckProcesses();
