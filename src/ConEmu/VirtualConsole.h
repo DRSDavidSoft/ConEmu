@@ -269,6 +269,7 @@ class CVirtualConsole :
 		bool SupportsTerminalBackdrop() const;
 		bool UsesTerminalBackdrop() const;
 		COLORREF GetTerminalBackground() const;
+		bool PaintTerminalBackdropPadding(HDC dc, const RECT& rect) const;
 		const ConEmu::PaletteColors& GetColors();
 		ConEmu::PaletteColors GetColors(bool bFade);
 		int GetPaletteIndex();

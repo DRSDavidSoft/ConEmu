@@ -2731,7 +2731,17 @@ struct BackdropTextRun
 	COLORREF color;
 };
 
-void BlendBackdropText(COLORREF* pixels, int stride, const BackdropTextRun& run)
+constexpr DWORD AcrylicTintOpacity = 204; // Keep 20% of the system backdrop.
+
+DWORD AcrylicTintPixel(COLORREF tint)
+{
+	return (AcrylicTintOpacity << 24)
+		| ((GetRValue(tint) * AcrylicTintOpacity / 255) << 16)
+		| ((GetGValue(tint) * AcrylicTintOpacity / 255) << 8)
+		| (GetBValue(tint) * AcrylicTintOpacity / 255);
+}
+
+void BlendBackdropText(COLORREF* pixels, int stride, const BackdropTextRun& run, DWORD tint)
 {
 	const auto red = GetRValue(run.color);
 	const auto green = GetGValue(run.color);
@@ -2742,15 +2752,18 @@ void BlendBackdropText(COLORREF* pixels, int stride, const BackdropTextRun& run)
 		for (LONG x = run.bounds.left; x < run.bounds.right; ++x)
 		{
 			const auto mask = row[x];
-			if (!mask)
+			if (!mask && !tint)
 				continue;
 
 			// GDI draws a white glyph on black. Collapse ClearType's
 			// channel coverage to a single alpha before applying the
 			// foreground so subpixel colors never reach the compositor.
 			const DWORD alpha = (((mask >> 16) & 255) + ((mask >> 8) & 255) + (mask & 255) + 1) / 3;
-			row[x] = (alpha << 24) | ((red * alpha / 255) << 16)
-				| ((green * alpha / 255) << 8) | (blue * alpha / 255);
+			const DWORD inv = 255 - alpha;
+			row[x] = ((alpha + (tint >> 24) * inv / 255) << 24)
+				| (((red * alpha + ((tint >> 16) & 255) * inv) / 255) << 16)
+				| (((green * alpha + ((tint >> 8) & 255) * inv) / 255) << 8)
+				| ((blue * alpha + (tint & 255) * inv) / 255);
 		}
 	}
 }
@@ -2794,6 +2807,7 @@ void CVirtualConsole::UpdateText()
 	// counters
 	const bool backdrop = UsesTerminalBackdrop();
 	const int backgroundIndex = mp_RCon->GetDefaultBackColorIdx();
+	const DWORD tint = backdrop && gpConEmu->IsAcrylicBackdropActive() ? AcrylicTintPixel(m_Colors[backgroundIndex]) : 0;
 	const auto isDefaultBackground = [&](const CharAttr& attr) {
 		return backdrop && attr.nBackIdx == backgroundIndex
 			&& attr.crBackColor == m_Colors[backgroundIndex]
@@ -3144,7 +3158,8 @@ void CVirtualConsole::UpdateText()
 			RECT rcFill = rect;
 			rcFill.left = rect.right;
 			rcFill.right = (int)m_Sizes.Width;
-			FillRect((HDC)m_DC, &rcFill, hBr);
+			if (!PaintTerminalBackdropPadding(m_DC, rcFill))
+				FillRect((HDC)m_DC, &rcFill, hBr);
 
 			if (lbDelBrush)
 				DeleteObject(hBr);
@@ -3154,7 +3169,7 @@ void CVirtualConsole::UpdateText()
 		{
 			GdiFlush();
 			for (const auto& run : backdropText)
-				BlendBackdropText(m_DC.pPixels, m_DC.iWidth, run);
+				BlendBackdropText(m_DC.pPixels, m_DC.iWidth, run, tint);
 			for (const auto& run : opaqueRuns)
 				MakeBackdropRunOpaque(m_DC.pPixels, m_DC.iWidth, run);
 		}
@@ -3168,7 +3183,8 @@ void CVirtualConsole::UpdateText()
 		HBRUSH hBr = CreateBackBrush(false, lbDelBrush);
 
 		RECT rcFill = {0, pos, (int)m_Sizes.Width, (int)m_Sizes.Height};
-		FillRect((HDC)m_DC, &rcFill, hBr);
+		if (!PaintTerminalBackdropPadding(m_DC, rcFill))
+			FillRect((HDC)m_DC, &rcFill, hBr);
 
 		if (lbDelBrush)
 			DeleteObject(hBr);
@@ -3199,7 +3215,7 @@ void CVirtualConsole::UpdateText()
 			{
 				GdiFlush();
 				if (useMask)
-					BlendBackdropText(m_DC.pPixels, m_DC.iWidth, {rect, attr.crForeColor});
+					BlendBackdropText(m_DC.pPixels, m_DC.iWidth, {rect, attr.crForeColor}, tint);
 				else
 					MakeBackdropRunOpaque(m_DC.pPixels, m_DC.iWidth, rect);
 			}
@@ -3746,6 +3762,25 @@ COLORREF CVirtualConsole::GetTerminalBackground() const
 	return UsesTerminalBackdrop() ? RGB(0, 0, 0) : m_Colors[mp_RCon->GetDefaultBackColorIdx()];
 }
 
+bool CVirtualConsole::PaintTerminalBackdropPadding(HDC dc, const RECT& rect) const
+{
+	if (!UsesTerminalBackdrop() || !gpConEmu->IsAcrylicBackdropActive())
+		return false;
+	BITMAPINFO info = {};
+	info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	info.bmiHeader.biWidth = 1;
+	info.bmiHeader.biHeight = 1;
+	info.bmiHeader.biPlanes = 1;
+	info.bmiHeader.biBitCount = 32;
+	const DWORD pixel = AcrylicTintPixel(m_Colors[mp_RCon->GetDefaultBackColorIdx()]);
+	const int mode = SetStretchBltMode(dc, COLORONCOLOR);
+	const int lines = StretchDIBits(dc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
+		0, 0, 1, 1, &pixel, &info, DIB_RGB_COLORS, SRCCOPY);
+	if (mode)
+		SetStretchBltMode(dc, mode);
+	return lines > 0;
+}
+
 HBRUSH CVirtualConsole::CreateBackBrush(bool bGuiVisible, bool& rbNonSystem)
 {
 	HBRUSH hBr = nullptr;
@@ -4026,7 +4061,8 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 
 		RECT rcFill = MakeRect(client.left + m_Sizes.Width, client.top, client.right, client.bottom);
 #ifndef SKIP_ALL_FILLRECT
-		FillRect(hPaintDc, &rcFill, hBr);
+		if (!PaintTerminalBackdropPadding(hPaintDc, rcFill))
+			FillRect(hPaintDc, &rcFill, hBr);
 #endif
 		client.right = client.left + m_Sizes.Width;
 	}
@@ -4037,7 +4073,8 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 
 		RECT rcFill = MakeRect(client.left, client.top + m_Sizes.Height, client.right, client.bottom);
 #ifndef SKIP_ALL_FILLRECT
-		FillRect(hPaintDc, &rcFill, hBr);
+		if (!PaintTerminalBackdropPadding(hPaintDc, rcFill))
+			FillRect(hPaintDc, &rcFill, hBr);
 #endif
 		client.bottom = client.top + m_Sizes.Height;
 	}

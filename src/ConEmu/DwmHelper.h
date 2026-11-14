@@ -183,6 +183,7 @@ public:
 	bool SupportsWindowBackdrop() const;
 	bool IsWindowBackdropActive() const { return windowBackdrop_ != 0; }
 	bool IsTerminalBackdropActive() const { return terminalBackdrop_; }
+	bool IsAcrylicBackdropActive() const { return windowBackdrop_ == 2; }
 	void UpdateWindowBackdrop(bool refresh = false);
 	void EnableBlurBehind(bool abBlurBehindClient);
 	bool ExtendWindowFrame();

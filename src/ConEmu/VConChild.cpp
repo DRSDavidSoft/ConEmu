@@ -1125,7 +1125,8 @@ LRESULT CConEmuChild::OnPaintGaps(HDC hdc)
 	{
 		if (!hdc)
 		{
-			FillRect(ps.hdc, &ps.rcPaint, hBrush);
+			if (!VCon->PaintTerminalBackdropPadding(ps.hdc, ps.rcPaint))
+				FillRect(ps.hdc, &ps.rcPaint, hBrush);
 		}
 		else
 		{
