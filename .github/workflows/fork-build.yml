@@ -115,9 +115,58 @@ jobs:
           Get-Content "$prefix.report"
           if ($result -ne 0) { exit $result }
 
-  release:
+  package:
     if: github.repository == 'Sim-md/ConEmu' && github.ref == 'refs/heads/main'
     needs: [intel, arm64-tests]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      tag: ${{ steps.package.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Package and verify all three ZIPs
+        id: package
+        run: |
+          mkdir -p artifacts/arm64
+          tar -xf artifacts/arm64-ci/arm64-ci.tar -C artifacts/arm64 package
+          tag="ci-${GITHUB_SHA:0:7}-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          python3 .github/scripts/package-fork-release.py artifacts dist "$GITHUB_SHA" "$tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packaged-release
+          path: dist/*
+          if-no-files-found: error
+
+  intel-updates:
+    needs: package
+    runs-on: windows-2022
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86, x64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: packaged-release
+          path: dist
+      - name: Verify update, rollback and classic hook
+        shell: powershell
+        run: |
+          $archive = (Get-ChildItem dist -Filter '*-${{ matrix.arch }}.zip').FullName
+          & .github/scripts/test-fork-update.ps1 -Archive $archive -Architecture ${{ matrix.arch }} -CheckHook
+
+  release:
+    needs: [package, intel-updates]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -128,17 +177,14 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
-          path: artifacts
-      - name: Package and verify all three ZIPs
-        run: |
-          mkdir -p artifacts/arm64
-          tar -xf artifacts/arm64-ci/arm64-ci.tar -C artifacts/arm64 package
-          python3 .github/scripts/package-fork-release.py artifacts dist "$GITHUB_SHA"
+          name: packaged-release
+          path: dist
       - name: Publish prerelease
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.package.outputs.tag }}
         run: |
-          tag="ci-${GITHUB_SHA:0:7}-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          tag="$TAG"
           version=$(sed -n 's/^version=//p' dist/version.ini | head -n 1)
           gh release create "$tag" --target "$GITHUB_SHA" --draft --prerelease --latest=false \
             --title "ConEmu $version (${GITHUB_SHA:0:7})" \

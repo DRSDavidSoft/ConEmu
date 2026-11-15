@@ -8,7 +8,7 @@ This fork adds native Windows ARM64 support, Far Manager integration, Windows th
 
 [Download ZIPs for ARM64, x86, and x64](https://github.com/Sim-md/ConEmu/releases). Choose the ZIP for your architecture under **Assets**. GitHub Actions publishes new ZIPs after successful builds and tests on the [main branch](https://github.com/Sim-md/ConEmu/tree/main).
 
-The built-in update check uses the fork's [version.ini](https://raw.githubusercontent.com/Sim-md/ConEmu/update-feed/version.ini) and opens the releases page on request. The published preview ZIPs are installed manually. Update notifications compare the build version from `src/ConEmu/version.h` and appear when that version increases.
+The built-in update check uses the fork's [version.ini](https://raw.githubusercontent.com/Sim-md/ConEmu/update-feed/version.ini). On x86 and x64, install the first ZIP with the bundled updater manually. Later updates install after confirmation, verify SHA-256 and both console runtimes, and roll back file replacements if an install fails. Use one GUI architecture per installation directory. Start ConEmu as administrator for updates in Program Files. ARM64 builds on this branch show a link to the releases page.
 
 ## Build and test
 

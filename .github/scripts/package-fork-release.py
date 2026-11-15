@@ -56,6 +56,9 @@ def package(artifacts, output, sha, arch, version):
 
     for name in ("ConEmu.l10n", "License.txt", "Scripts/ConEmu.NoHooks.bash", "Scripts/ConEmu.NoHooks.psm1"):
         files[f"ConEmu/{name}"] = Path("Release/ConEmu") / name
+    if not arm:
+        updater = "ConEmu/Scripts/ForkUpdate.ps1"
+        files[updater] = Path("Release") / updater
     files["ConEmu/Unicode-LICENSE.txt"] = Path("src/common/Unicode-LICENSE.txt")
     resources = Path("Release/plugins/ConEmu")
     for pattern in ("**/*.lng", "Background/Background.xml", "Background/img/*.png"):
@@ -92,13 +95,21 @@ def release_version():
 def main():
     artifacts, output = map(Path, sys.argv[1:3])
     sha = sys.argv[3]
+    tag = sys.argv[4]
+    if not re.fullmatch(rf"ci-{sha[:7]}-[0-9]+-[0-9]+", tag):
+        raise ValueError(f"Invalid CI release tag: {tag}")
     output.mkdir()
     version = release_version()
     archives = [package(artifacts, output, sha, arch, version) for arch in MACHINES]
-    checksums = [f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}" for path in archives]
+    digests = {arch: hashlib.sha256(path.read_bytes()).hexdigest() for arch, path in zip(MACHINES, archives)}
+    checksums = [f"{digests[arch]}  {path.name}" for arch, path in zip(MACHINES, archives)]
     (output / "SHA256SUMS.txt").write_text("\n".join(checksums) + "\n", encoding="ascii")
     channels = ("Stable", "Preview", "Devel")
     feed = "\n".join(f"[ConEmu_{channel}_2]\nversion={version}\n" for channel in channels)
+    for arch, path in zip(MACHINES, archives):
+        if arch != "arm64":
+            url = f"https://github.com/Sim-md/ConEmu/releases/download/{tag}/{path.name}"
+            feed += f"\n[ConEmu_{arch}]\nversion={version}\nsha256={digests[arch]}\nurl={url}\n"
     (output / "version.ini").write_text(feed, encoding="ascii")
 
 

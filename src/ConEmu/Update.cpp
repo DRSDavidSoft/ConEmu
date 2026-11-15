@@ -1723,13 +1723,48 @@ int CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 				const CEStr message(L"ConEmu ", ms_NewVersion, L" is available.");
 				if (m_ManualCallMode == UpdateCallMode::Automatic && !mp_Set->isUpdateConfirmDownload)
 				{
+#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) || defined(__x86_64__)
+					Icon.ShowTrayIcon(CEStr(message, L"\nClick to review the update."), tsa_Source_Updater);
+#else
 					Icon.ShowTrayIcon(CEStr(message, L"\nClick to view releases."), tsa_Source_Updater);
+#endif
 				}
 				else
 				{
+#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) || defined(__x86_64__)
+					const CEStr prompt(message, L"\n\nInstall the update after closing Far and ConEmu?");
+					if (MsgBox(prompt, MB_ICONINFORMATION | MB_YESNO | MB_DEFBUTTON2, ms_DefaultTitle) == IDYES)
+					{
+						wchar_t systemPath[MAX_PATH]{};
+						const auto length = GetSystemDirectory(systemPath, countof(systemPath));
+						const CEStr script(gpConEmu->ms_ConEmuExeDir, L"\\ConEmu\\Scripts\\ForkUpdate.ps1");
+						if (!length || length >= countof(systemPath) || !FileExists(script))
+						{
+							MsgBox(L"The bundled updater or Windows PowerShell is missing.", MB_ICONERROR, ms_DefaultTitle);
+							break;
+						}
+						if (bNeedRunElevation)
+						{
+							MsgBox(L"Start ConEmu as administrator to update this protected installation.", MB_ICONINFORMATION, ms_DefaultTitle);
+							break;
+						}
+						wchar_t pid[16]{};
+						swprintf_c(pid, L"%u", GetCurrentProcessId());
+						const CEStr powershell(systemPath, L"\\WindowsPowerShell\\v1.0\\powershell.exe");
+						const CEStr arguments(L"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"", script,
+							L"\" -Architecture " WIN3264TEST(L"x86", L"x64") L" -Version ", ms_NewVersion, L" -WaitForPid ", pid);
+						const auto result = reinterpret_cast<INT_PTR>(ShellExecute(ghWnd, L"open", powershell,
+							arguments, gpConEmu->ms_ConEmuExeDir, SW_HIDE));
+						if (result > 32)
+							gpConEmu->PostScClose();
+						else
+							MsgBox(L"Windows could not start the updater.", MB_ICONERROR, ms_DefaultTitle);
+					}
+#else
 					const CEStr prompt(message, L"\n\nOpen the releases page?\n", gsDownlPage);
 					if (MsgBox(prompt, MB_ICONINFORMATION | MB_YESNO, ms_DefaultTitle) == IDYES)
 						ConEmuAbout::OnInfo_DownloadPage();
+#endif
 				}
 			}
 			else if (m_ManualCallMode == UpdateCallMode::TSA)
