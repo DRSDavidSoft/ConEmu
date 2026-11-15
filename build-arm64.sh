@@ -50,6 +50,9 @@ set -- $(sed -nE 's/^[[:space:]]*([^[:space:]]+\.cpp)[[:space:]]*\\?[[:space:]]*
 
 cp "$root/Release/ConEmu/License.txt" "$root/Release/ConEmu/ConEmu.l10n" "$package/ConEmu/"
 mkdir -p "$package/ConEmu/Scripts"
+if [ -n "${DETOURS_LIB:-}" ]; then
+    cp "$root/Release/ConEmu/Scripts/ForkUpdate.ps1" "$package/ConEmu/Scripts/"
+fi
 cp "$root/Release/ConEmu/Scripts/ConEmu.NoHooks.psm1" "$package/ConEmu/Scripts/"
 cp "$root/Release/ConEmu/Scripts/ConEmu.NoHooks.bash" "$package/ConEmu/Scripts/"
 cp "$root/src/common/Unicode-LICENSE.txt" "$package/ConEmu/"

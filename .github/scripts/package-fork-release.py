@@ -39,8 +39,7 @@ def package(artifacts, output, sha, arch, version):
         root = build if arm else artifacts / f"binaries-{runtime}"
         bits = "" if runtime == "x86" else "64"
         names = [f"ConEmuC{bits}.exe", f"ConEmuCD{bits}.dll"]
-        if not arm:
-            names.append(f"ConEmuHk{bits}.dll")
+        names.append(f"ConEmuHk{bits}.dll")
         for name in names:
             path = f"ConEmu/{name}"
             add_binary(files, root, path, path, runtime)
@@ -56,9 +55,10 @@ def package(artifacts, output, sha, arch, version):
 
     for name in ("ConEmu.l10n", "License.txt", "Scripts/ConEmu.NoHooks.bash", "Scripts/ConEmu.NoHooks.psm1"):
         files[f"ConEmu/{name}"] = Path("Release/ConEmu") / name
-    if not arm:
-        updater = "ConEmu/Scripts/ForkUpdate.ps1"
-        files[updater] = Path("Release") / updater
+    updater = "ConEmu/Scripts/ForkUpdate.ps1"
+    files[updater] = Path("Release") / updater
+    if arm:
+        files["ConEmu/Detours-LICENSE.txt"] = build / "ConEmu/Detours-LICENSE.txt"
     files["ConEmu/Unicode-LICENSE.txt"] = Path("src/common/Unicode-LICENSE.txt")
     resources = Path("Release/plugins/ConEmu")
     for pattern in ("**/*.lng", "Background/Background.xml", "Background/img/*.png"):
@@ -107,9 +107,8 @@ def main():
     channels = ("Stable", "Preview", "Devel")
     feed = "\n".join(f"[ConEmu_{channel}_2]\nversion={version}\n" for channel in channels)
     for arch, path in zip(MACHINES, archives):
-        if arch != "arm64":
-            url = f"https://github.com/Sim-md/ConEmu/releases/download/{tag}/{path.name}"
-            feed += f"\n[ConEmu_{arch}]\nversion={version}\nsha256={digests[arch]}\nurl={url}\n"
+        url = f"https://github.com/Sim-md/ConEmu/releases/download/{tag}/{path.name}"
+        feed += f"\n[ConEmu_{arch}]\nversion={version}\nsha256={digests[arch]}\nurl={url}\n"
     (output / "version.ini").write_text(feed, encoding="ascii")
 
 

@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory)][string]$Archive,
-    [Parameter(Mandatory)][ValidateSet('x86','x64')][string]$Architecture,
+    [Parameter(Mandatory)][ValidateSet('x86','x64','arm64')][string]$Architecture,
     [string]$WorkDir = $env:TEMP,
     [string]$HookProbe
 )

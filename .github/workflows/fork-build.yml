@@ -77,7 +77,20 @@ jobs:
           mkdir "$RUNNER_TEMP/llvm-mingw"
           tar -xf "$RUNNER_TEMP/$archive" --strip-components=1 -C "$RUNNER_TEMP/llvm-mingw"
           echo "$RUNNER_TEMP/llvm-mingw/bin" >> "$GITHUB_PATH"
-      - name: Build ConEmu and Far plugins
+      - name: Build pinned Microsoft Detours
+        run: |
+          detours="$RUNNER_TEMP/detours"
+          git init -q "$detours"
+          git -C "$detours" fetch --depth=1 https://github.com/microsoft/Detours.git 1dbd4ea281d73d478aa8d09a8b83fbd265f715f7
+          git -C "$detours" checkout --detach FETCH_HEAD
+          for source in detours modules disasm image creatwth disolx86 disolx64 disolia64 disolarm disolarm64; do
+            aarch64-w64-mingw32-clang++ -std=c++17 -O2 -DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=0x0601 \
+              -DDETOUR_DEBUG=0 -fms-extensions -D__STRSAFE__NO_INLINE -c "$detours/src/$source.cpp" -o "$detours/$source.o"
+          done
+          llvm-ar rcs "$detours/libdetours.a" "$detours"/*.o
+          echo "DETOURS_LIB=$detours/libdetours.a" >> "$GITHUB_ENV"
+          echo "DETOURS_INCLUDE=$detours/src" >> "$GITHUB_ENV"
+      - name: Build ConEmu with ARM64 hooks and Far plugins
         run: sh build-arm64.sh
       - name: Build ConPTY tests
         run: |
@@ -86,6 +99,7 @@ jobs:
           aarch64-w64-mingw32-clang++ -std=c++17 -O1 -static "$sources/ConPtyInput_test.cpp" -o Release-arm64/tests/Input.exe -lole32
           aarch64-w64-mingw32-clang++ -std=c++17 -O1 -static -municode -include crtdbg.h -Wno-c++11-narrowing "$sources/ConPtyHistory_test.cpp" -o Release-arm64/tests/History.exe
           aarch64-w64-mingw32-clang++ -std=c++17 -O1 -static -municode "$sources/ConPtyHistoryChild.cpp" -o Release-arm64/tests/HistoryChild.exe
+          aarch64-w64-mingw32-clang++ -std=c++17 -O2 -static -municode .github/scripts/fork-update-hook-probe.cpp -o Release-arm64/tests/HookUpdateProbe.exe
           tar -cf "$RUNNER_TEMP/arm64-ci.tar" -C Release-arm64 package tests
       - uses: actions/upload-artifact@v4
         with:
@@ -143,14 +157,20 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
-  intel-updates:
+  updates:
     needs: package
-    runs-on: windows-2022
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86, x64]
+        include:
+          - arch: x86
+            runner: windows-2022
+          - arch: x64
+            runner: windows-2022
+          - arch: arm64
+            runner: windows-11-arm
     steps:
       - uses: actions/checkout@v4
         with:
@@ -160,10 +180,21 @@ jobs:
           name: packaged-release
           path: dist
       - name: Build the native hook probe
+        if: matrix.arch != 'arm64'
         shell: cmd
         run: |
           for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do call "%%i\Common7\Tools\VsDevCmd.bat" -arch=${{ matrix.arch }} -host_arch=x64
           cl /nologo /O2 /MT /Fe:"%RUNNER_TEMP%\HookUpdateProbe.exe" .github\scripts\fork-update-hook-probe.cpp
+      - uses: actions/download-artifact@v4
+        if: matrix.arch == 'arm64'
+        with:
+          name: arm64-ci
+      - name: Extract the ARM64 hook probe
+        if: matrix.arch == 'arm64'
+        run: |
+          tar -xf arm64-ci.tar -C "$env:RUNNER_TEMP" tests/HookUpdateProbe.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Move-Item "$env:RUNNER_TEMP/tests/HookUpdateProbe.exe" "$env:RUNNER_TEMP/HookUpdateProbe.exe"
       - name: Verify update, rollback and classic hook
         shell: powershell
         run: |
@@ -171,7 +202,7 @@ jobs:
           & .github/scripts/test-fork-update.ps1 -Archive $archive -Architecture ${{ matrix.arch }} -HookProbe "$env:RUNNER_TEMP/HookUpdateProbe.exe"
 
   release:
-    needs: [package, intel-updates]
+    needs: [package, updates]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory)][ValidateSet('x86','x64')][string]$Architecture,
+    [Parameter(Mandatory)][ValidateSet('x86','x64','arm64')][string]$Architecture,
     [ValidatePattern('^[0-9]{6}[a-z]?$')][string]$Version,
     [ValidateRange(0,2147483647)][int]$WaitForPid = 0,
     [switch]$Recover,
@@ -8,19 +8,21 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $feedUrl = 'https://raw.githubusercontent.com/Sim-md/ConEmu/update-feed/version.ini'
-$bits = if ($Architecture -eq 'x64') { '64' } else { '' }
-$pluginSuffix = if ($Architecture -eq 'x64') { '.x64.dll' } else { '.dll' }
-$thumbBits = if ($Architecture -eq 'x64') { '64' } else { '32' }
+$bits = if ($Architecture -eq 'x86') { '' } else { '64' }
+$pluginSuffix = @{x86='.dll'; x64='.x64.dll'; arm64='.arm64.dll'}[$Architecture]
+$thumbBits = if ($bits) { '64' } else { '32' }
+$machine = @{x86=0x014c; x64=0x8664; arm64=0xaa64}[$Architecture]
 $gui = "ConEmu$bits.exe"
-$otherGui = if ($Architecture -eq 'x64') { 'ConEmu.exe' } else { 'ConEmu64.exe' }
+$otherGui = if ($bits) { 'ConEmu.exe' } else { 'ConEmu64.exe' }
 
 # Keep both runtimes, including hooks for console processes of either bitness.
 $machines = @{}
+$runtimes = if ($Architecture -eq 'arm64') { @('64') } else { @('','64') }
 $updateFiles = @(
-    foreach ($runtime in '','64') {
+    foreach ($runtime in $runtimes) {
         foreach ($name in "ConEmuC$runtime.exe","ConEmuCD$runtime.dll","ConEmuHk$runtime.dll") {
             $path = "ConEmu/$name"
-            $machines[$path] = if ($runtime) { 0x8664 } else { 0x014c }
+            $machines[$path] = if ($Architecture -eq 'arm64') { 0xaa64 } elseif ($runtime) { 0x8664 } else { 0x014c }
             $path
         }
     }
@@ -28,14 +30,14 @@ $updateFiles = @(
         "Lines/ConEmuLn$pluginSuffix","Thumbs/ConEmuTh$pluginSuffix","Thumbs/gdi+.t$thumbBits",
         "Thumbs/ico.t$thumbBits","Thumbs/pe.t$thumbBits") {
         $path = "Plugins/ConEmu/$name"
-        $machines[$path] = if ($bits) { 0x8664 } else { 0x014c }
+        $machines[$path] = $machine
         $path
     }
     'ConEmu/ConEmu.l10n'
     'ConEmu/Scripts/ForkUpdate.ps1'
     $gui
 )
-$machines[$gui] = if ($bits) { 0x8664 } else { 0x014c }
+$machines[$gui] = $machine
 
 function Assert-OrdinaryPath([string]$Path) {
     for ($item = $Path; $item; $item = [IO.Path]::GetDirectoryName($item)) {
