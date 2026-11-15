@@ -2797,9 +2797,14 @@ DWORD CPluginBase::MonitorThreadProcW(LPVOID lpParameter)
 		if (dwWait == WAIT_OBJECT_0)
 			break; // завершение плагина
 
-		// No input hook is available to request metadata refreshes in this mode.
-		// Schedule Far APIs on its main thread, including when no background plugin is enabled.
-		if (!ghHooksModule && ghConEmuWndDC && IS_SYNCHRO_ALLOWED && gnSynchroCount == 0)
+		// Far can move panels without a console input hook notification on ARM64.
+		// Schedule metadata refresh on the main thread in those sessions too.
+#if defined(CONEMU_ARM64_HOOKS)
+		const bool refreshPanelMetadata = true;
+#else
+		const bool refreshPanelMetadata = !ghHooksModule;
+#endif
+		if (refreshPanelMetadata && ghConEmuWndDC && IS_SYNCHRO_ALLOWED && gnSynchroCount == 0)
 		{
 			gbNeedPostReloadFarInfo = TRUE;
 			Plugin()->ExecuteSynchro();

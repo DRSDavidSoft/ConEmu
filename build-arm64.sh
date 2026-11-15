@@ -12,6 +12,11 @@ esac
 target=aarch64-w64-mingw32-
 cpp_options="-fdelayed-template-parsing -fms-extensions -fms-compatibility-version=19.20"
 cpp_flags="-include crtdbg.h -Wno-c++11-narrowing -Wno-nonportable-include-path"
+if [ -n "${DETOURS_LIB:-}" ]; then
+    : "${DETOURS_INCLUDE:?Set DETOURS_INCLUDE to the directory containing detours.h}"
+    test -f "$DETOURS_LIB" && test -f "$DETOURS_INCLUDE/detours.h"
+    cpp_flags="$cpp_flags -DCONEMU_ARM64_HOOKS -D__STRSAFE__NO_INLINE -I$DETOURS_INCLUDE"
+fi
 package="$out/package"
 plugin="$package/Plugins/ConEmu"
 mkdir -p "$out/obj" "$package/ConEmu" "$plugin"
@@ -20,12 +25,16 @@ build_component() {
     make -B -j "${JOBS:-4}" -C "$root/src/$1" -f makefile_gcc \
         ARM64=1 DIRBIT=64 CROSS_HOST="$target" CXX="${target}clang++" CC="${target}clang" \
         FCPPOPT="$cpp_options" USERCPPFLAGS="$cpp_flags" \
-        TMPDIR="$out/obj" RELEASEDIR="$2"
+        TMPDIR="$out/obj" RELEASEDIR="$2" DETOURS_LIB="${DETOURS_LIB:-}"
 }
 
 build_component ConEmu "$package"
 build_component ConEmuC "$package/ConEmu"
 build_component ConEmuCD "$package/ConEmu"
+if [ -n "${DETOURS_LIB:-}" ]; then
+    build_component ConEmuHk "$package/ConEmu"
+    cp "$root/Release/ConEmu/Detours-LICENSE.txt" "$package/ConEmu/"
+fi
 
 cd "$root/src/ConEmuPlugin"
 # Reuse the existing source list. The additional units are needed by this build.

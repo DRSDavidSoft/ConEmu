@@ -212,7 +212,7 @@ void WINAPI SetStartupInfoW(void *aInfo)
 	gbInfoW_OK = TRUE;
 #if defined(_M_ARM64) || defined(__aarch64__)
 	// Without the loader hook, ConEmu cannot notify plugins loaded after it.
-	if (!gfRegisterBackground)
+	if (!gfRegisterBackground && !GetModuleHandleW(ConEmuHk_64_DLL))
 	{
 		if (const HMODULE conemu = GetModuleHandleW(L"ConEmu.arm64.dll"))
 			gfRegisterBackground = reinterpret_cast<RegisterBackground_t>(GetProcAddress(conemu, "RegisterBackground"));

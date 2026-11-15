@@ -35,6 +35,17 @@ The ARM64 build disables injection and uses the Far plugin's IPC for panel
 information and drag operations. Features that require `ConEmuHk` are
 unavailable in this build.
 
+### Experimental native hook build
+
+Set `DETOURS_LIB` to the absolute path of an ARM64 Microsoft Detours static
+library and `DETOURS_INCLUDE` to the absolute path of the matching header
+directory before running `build-arm64.sh`. The port was tested with Detours
+commit `1dbd4ea281d73d478aa8d09a8b83fbd265f715f7`. Use a fresh `BUILD_DIR` for this
+build so the hook DLL and the experimental GUI and server stay together.
+Enable **Inject ConEmuHk** in the test profile. The experimental loader
+recognizes native ARM64 processes. An emulated x86 or x64 process continues
+without native ARM64 injection.
+
 ## Explicit shell integration without ConEmuHk
 
 Import the bundled module from an existing PowerShell tab in ConEmu:

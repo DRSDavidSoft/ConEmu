@@ -238,7 +238,7 @@ int MDEBUG_CHK = TRUE;
 
 bool LogString(LPCWSTR asInfo, bool abWriteTime /*= true*/, bool abWriteLine /*= true*/)
 {
-	return gpConEmu->LogString(asInfo, abWriteTime, abWriteLine);
+	return gpConEmu && gpConEmu->LogString(asInfo, abWriteTime, abWriteLine);
 }
 
 void ShutdownGuiStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int nParm3 /*= 0*/, int nParm4 /*= 0*/)
@@ -838,7 +838,8 @@ int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= nullptr*/, HWND ahP
 	// If there were problems with displaying error box, MessageBox will return default button
 	// This may cause infinite loops in some cases
 	SetLastError(0);
-	int nBtn = MessageBox(hParent, lpText ? lpText : L"<nullptr>", lpCaption ? lpCaption : gpConEmu->GetLastTitle(), uType);
+	const auto caption = lpCaption ? lpCaption : (gpConEmu ? gpConEmu->GetLastTitle() : L"ConEmu");
+	int nBtn = MessageBox(hParent, lpText ? lpText : L"<nullptr>", caption, uType);
 	DWORD nErr = GetLastError();
 
 	ghDlgPendingFrom = nullptr;
