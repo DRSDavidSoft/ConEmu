@@ -2,7 +2,7 @@ param(
     [Parameter(Mandatory)][string]$Archive,
     [Parameter(Mandatory)][ValidateSet('x86','x64')][string]$Architecture,
     [string]$WorkDir = $env:TEMP,
-    [switch]$CheckHook
+    [string]$HookProbe
 )
 
 $ErrorActionPreference = 'Stop'
@@ -110,34 +110,25 @@ if ((Get-State $root $sentinels) -ne $settings) { throw 'Far or settings changed
 
 Test-ExpectedFailure { Install-ForkUpdate $root $Archive $validHash $version } 'not a newer'
 'PASS same-version package rejected'
-if ($CheckHook) {
+if ($HookProbe) {
     $config = Join-Path $lab 'hook.xml'
+    $report = Join-Path $lab 'hook.report'
     '<key name="Software"><key name="ConEmu"><key name=".Vanilla"><value name="UseInjects" type="hex" data="01"/></key></key></key>' |
         Set-Content -LiteralPath $config -Encoding utf8
-    $shellFolder = if ($Architecture -eq 'x86') { 'SysWOW64' } else { 'System32' }
-    $shell = Join-Path $env:SystemRoot "$shellFolder/cmd.exe"
-    $marker = 'ConEmuHookSmoke' + [guid]::NewGuid().ToString('N')
-    $arguments = "-NoSingle -NoDefTerm -NoUpdate -NoCloseConfirm -LoadCfgFile `"$config`" -run `"$shell`" /k echo $marker"
+    $probe = (Resolve-Path -LiteralPath $HookProbe).Path
+    $hookName = "ConEmuHk$bits.dll"
+    $hookPath = Join-Path $root "ConEmu\$hookName"
+    $arguments = "-ResetDefault -NoSingle -NoDefTerm -NoUpdate -NoCloseConfirm -LoadCfgFile `"$config`" -log -run `"$probe`" `"$report`""
     $console = Start-Process -FilePath $guiPath -ArgumentList $arguments -WorkingDirectory $root -WindowStyle Hidden -PassThru
-    $child = $null
     try {
-        $hookPath = Join-Path $root "ConEmu\ConEmuHk$bits.dll"
-        for ($attempt = 0; $attempt -lt 50; $attempt++) {
-            $process = Get-CimInstance Win32_Process -Filter "Name='cmd.exe'" |
-                Where-Object CommandLine -like "*$marker*" | Select-Object -First 1
-            if ($process) {
-                $child = Get-Process -Id $process.ProcessId -ErrorAction SilentlyContinue
-                if ($child -and $hookPath -in ($child.Modules | Select-Object -ExpandProperty FileName)) { break }
-            }
-            if ($console.HasExited) { throw 'ConEmu closed before attaching the classic hook' }
+        for ($attempt = 0; $attempt -lt 80 -and !(Test-Path -LiteralPath $report); $attempt++) {
             Start-Sleep -Milliseconds 250
         }
-        if (!$child -or $hookPath -notin ($child.Modules | Select-Object -ExpandProperty FileName)) {
-            throw "Expected classic hook did not load: $hookPath"
+        if (!(Test-Path -LiteralPath $report) -or [Text.Encoding]::Unicode.GetString([IO.File]::ReadAllBytes($report)) -ine $hookPath) {
+            throw "Expected classic hook did not load in the $Architecture process. Logs: $root"
         }
-        "PASS $Architecture cmd.exe loaded ConEmuHk in a classic console after update"
+        "PASS $Architecture process loaded $hookName in a classic console after update"
     } finally {
-        if ($child -and !$child.HasExited) { Stop-Process -InputObject $child }
         if (!$console.HasExited) {
             [void]$console.CloseMainWindow()
             if (!$console.WaitForExit(3000)) { Stop-Process -InputObject $console }

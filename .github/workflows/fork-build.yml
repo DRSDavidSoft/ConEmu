@@ -159,11 +159,16 @@ jobs:
         with:
           name: packaged-release
           path: dist
+      - name: Build the native hook probe
+        shell: cmd
+        run: |
+          for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do call "%%i\Common7\Tools\VsDevCmd.bat" -arch=${{ matrix.arch }} -host_arch=x64
+          cl /nologo /O2 /MT /Fe:"%RUNNER_TEMP%\HookUpdateProbe.exe" .github\scripts\fork-update-hook-probe.cpp
       - name: Verify update, rollback and classic hook
         shell: powershell
         run: |
           $archive = (Get-ChildItem dist -Filter '*-${{ matrix.arch }}.zip').FullName
-          & .github/scripts/test-fork-update.ps1 -Archive $archive -Architecture ${{ matrix.arch }} -CheckHook
+          & .github/scripts/test-fork-update.ps1 -Archive $archive -Architecture ${{ matrix.arch }} -HookProbe "$env:RUNNER_TEMP/HookUpdateProbe.exe"
 
   release:
     needs: [package, intel-updates]
