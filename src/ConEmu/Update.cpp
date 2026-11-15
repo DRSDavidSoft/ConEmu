@@ -734,6 +734,17 @@ DWORD CConEmuUpdate::CheckProcInt()
 			throw ErrorInfo(L"Update cancelled, no newer version was found");
 		}
 
+		if (mp_Set->UsesForkUpdateFeed())
+		{
+			if (gpConEmu)
+				gpConEmu->CallMainThread(true, QueryConfirmationCallback, static_cast<LPARAM>(UpdateStep::ConfirmDownload));
+			wcscpy_c(ms_SkipVersion, ms_NewVersion);
+			m_UpdateStep = UpdateStep::NotStarted;
+			Inet.Deinit(true);
+			mb_InCheckProcedure = FALSE;
+			return 0;
+		}
+
 		pszSource = ms_SourceFull.ms_Val;
 		nSrcLen = wcstoul(pszSource, &pszEnd, 10);
 		if (!nSrcLen || !pszEnd || *pszEnd != L',' || *(pszEnd + 1) != L'x')
@@ -989,6 +1000,20 @@ bool CConEmuUpdate::LoadVersionInfoFromServer()
 		{
 			ReportBrokenIni(szSection, L"version", pszUpdateVerLocationSet, pszUpdateVerLocation);
 			throw ErrorInfo(L"Update version information is invalid");
+		}
+
+		if (mp_Set->UsesForkUpdateFeed())
+		{
+			const size_t length = wcslen(ms_NewVersion);
+			const bool hasSuffix = length == 7 && ms_NewVersion[6] >= L'a' && ms_NewVersion[6] <= L'z';
+			if ((length != 6 && !hasSuffix) || wcsspn(ms_NewVersion, L"0123456789") != 6)
+			{
+				ReportBrokenIni(szSection, L"version", pszUpdateVerLocationSet, pszUpdateVerLocation);
+				throw ErrorInfo(L"Fork update version information is invalid");
+			}
+
+			GetVersionsFromIni(pszUpdateVerLocation, ms_VerOnServer, ms_VerOnServerRA, ms_CurVerInfo);
+			return true;
 		}
 
 		// URL may not contain file name at all, compile it (predefined)
@@ -1693,7 +1718,21 @@ int CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 			mb_NewVersionAvailable = true;
 			m_UpdateStep = step;
 
-			if (m_ManualCallMode == UpdateCallMode::TSA)
+			if (mp_Set->UsesForkUpdateFeed())
+			{
+				const CEStr message(L"ConEmu ", ms_NewVersion, L" is available.");
+				if (m_ManualCallMode == UpdateCallMode::Automatic && !mp_Set->isUpdateConfirmDownload)
+				{
+					Icon.ShowTrayIcon(CEStr(message, L"\nClick to view releases."), tsa_Source_Updater);
+				}
+				else
+				{
+					const CEStr prompt(message, L"\n\nOpen the releases page?\n", gsDownlPage);
+					if (MsgBox(prompt, MB_ICONINFORMATION | MB_YESNO, ms_DefaultTitle) == IDYES)
+						ConEmuAbout::OnInfo_DownloadPage();
+				}
+			}
+			else if (m_ManualCallMode == UpdateCallMode::TSA)
 			{
 				lRc = TRUE;
 			}

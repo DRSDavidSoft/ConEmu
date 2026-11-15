@@ -139,8 +139,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="ci-${GITHUB_SHA:0:7}-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          version=$(sed -n 's/^version=//p' dist/version.ini | head -n 1)
           gh release create "$tag" --target "$GITHUB_SHA" --draft --prerelease --latest=false \
-            --title "ConEmu CI build ${GITHUB_SHA:0:7}" \
+            --title "ConEmu $version (${GITHUB_SHA:0:7})" \
             --notes "ARM64, x86 and x64 builds from $GITHUB_SHA. All jobs passed in $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID. SHA-256 sums are in SHA256SUMS.txt."
-          gh release upload "$tag" dist/*.zip dist/SHA256SUMS.txt
+          gh release upload "$tag" dist/*.zip dist/SHA256SUMS.txt dist/version.ini
           gh release edit "$tag" --draft=false --prerelease --latest=false
+      - name: Publish version.ini for installed copies
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh auth setup-git
+          bash .github/scripts/publish-update-feed.sh dist/version.ini

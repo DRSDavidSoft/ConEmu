@@ -2,6 +2,7 @@
 
 import hashlib
 from pathlib import Path
+import re
 import struct
 import sys
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -26,7 +27,7 @@ def add_binary(files, root, source, destination, arch):
     files[destination] = path
 
 
-def package(artifacts, output, sha, arch):
+def package(artifacts, output, sha, arch, version):
     files = {}
     arm = arch == "arm64"
     build = artifacts / ("arm64/package" if arm else f"binaries-{arch}")
@@ -63,7 +64,7 @@ def package(artifacts, output, sha, arch):
     for name in ("ARM64-BUILD.md", "CONPTY.md", "FAR-SCROLLBACK.md", "SECURITY-CHANGES.txt"):
         files[name] = Path(name)
 
-    archive = output / f"ConEmu-{sha[:7]}-{arch}.zip"
+    archive = output / f"ConEmu-{version}-{sha[:7]}-{arch}.zip"
     with ZipFile(archive, "w", ZIP_DEFLATED) as zip_file:
         for name, path in sorted(files.items()):
             zip_file.write(path, name)
@@ -74,13 +75,31 @@ def package(artifacts, output, sha, arch):
     return archive
 
 
+def release_version():
+    header = Path("src/ConEmu/version.h").read_text(encoding="ascii")
+    parts = re.search(
+        r'^#define MVV_1 (\d{2})\n#define MVV_2 (\d{1,2})\n#define MVV_3 (\d{1,2})'
+        r'\n#define MVV_4 \d+\n#define MVV_4a "([a-z]?)"$',
+        header,
+        re.MULTILINE,
+    )
+    if parts is None or "#define MVV_git" in header:
+        raise ValueError("version.h must define a dated release version")
+    year, month, day, suffix = parts.groups()
+    return f"{year}{int(month):02}{int(day):02}{suffix}"
+
+
 def main():
     artifacts, output = map(Path, sys.argv[1:3])
     sha = sys.argv[3]
     output.mkdir()
-    archives = [package(artifacts, output, sha, arch) for arch in MACHINES]
+    version = release_version()
+    archives = [package(artifacts, output, sha, arch, version) for arch in MACHINES]
     checksums = [f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}" for path in archives]
     (output / "SHA256SUMS.txt").write_text("\n".join(checksums) + "\n", encoding="ascii")
+    channels = ("Stable", "Preview", "Devel")
+    feed = "\n".join(f"[ConEmu_{channel}_2]\nversion={version}\n" for channel in channels)
+    (output / "version.ini").write_text(feed, encoding="ascii")
 
 
 if __name__ == "__main__":
