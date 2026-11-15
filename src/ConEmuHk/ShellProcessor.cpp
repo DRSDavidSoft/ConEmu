@@ -3099,9 +3099,16 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 
 void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI) const
 {
+	const bool resume = !(workOptions_ & ShellWorkOptions::WasSuspended);
 #if defined(CONEMU_ARM64_HOOKS)
 	if (!IsNativeArm64Target(lpPI->hProcess) && GetLastError() == ERROR_NOT_SUPPORTED)
+	{
+		// ConEmu suspended the child for injection. Emulated targets still need
+		// to start unless the original caller explicitly requested suspension.
+		if (resume)
+			ResumeThread(lpPI->hThread);
 		return;
+	}
 #endif
 	wchar_t szDbgMsg[255];
 	msprintf(szDbgMsg, countof(szDbgMsg), L"%s: InjectHooks(x%u), ParentPID=%u (%s), ChildPID=%u",
@@ -3132,7 +3139,7 @@ void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI) const
 	}
 
 	// Release process, it called was not set CREATE_SUSPENDED flag
-	if (!(workOptions_ & ShellWorkOptions::WasSuspended))
+	if (resume)
 	{
 		ResumeThread(lpPI->hThread);
 	}
