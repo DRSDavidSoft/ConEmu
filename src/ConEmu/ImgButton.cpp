@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AboutDlg.h"
 #include "DpiAware.h"
 #include "ImgButton.h"
+#include "DarkMode.h"
 #include "ToolImg.h"
 
 wchar_t gsDonatePage[] = CEDONATEPAGE;
@@ -234,6 +235,7 @@ void CImgButtons::RegisterTip()
 		                         g_hInstance, nullptr);
 		if (!hwndTip)
 			return;
+		DarkMode::ApplyTooltip(hwndTip);
 		SetWindowPos(hwndTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 		//SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 30000);
 	}

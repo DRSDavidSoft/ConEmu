@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "DwmApi_Part.h"
 #include "DarkMode.h"
+#include "Options.h"
 #include "ConEmu.h"
 #include "Options.h"
 #include "IatHook.h"
@@ -77,7 +78,21 @@ void CDwmHelper::RefreshTitleBarThemeColor(HWND hWnd)
 	if (!hWnd || !global::g_darkModeSupported)
 		return;
 
-	global::g_darkModeEnabled = _ShouldAppsUseDarkMode() && !IsHighContrast();
+	if (hWnd == ghWnd && _SetPreferredAppMode)
+	{
+		const BYTE mode = gpSet ? gpSet->nTheme : static_cast<BYTE>(theme_Auto);
+		const auto preferred = IsHighContrast() || mode == theme_Light ? ForceLight
+			: (mode == theme_Dark ? ForceDark : AllowDark);
+		static auto previous = Default;
+		if (preferred != previous)
+		{
+			previous = preferred;
+			_SetPreferredAppMode(preferred);
+			_RefreshImmersiveColorPolicyState();
+			_FlushMenuThemes();
+		}
+	}
+	global::g_darkModeEnabled = IsWindowsDarkMode();
 	BOOL dark = global::g_darkModeEnabled;
 	_AllowDarkModeForWindow(hWnd, dark != FALSE);
 
@@ -163,8 +178,7 @@ void AllowDarkModeForApp(bool allow)
 static HANDLE WINAPI MyOpenThemeData(HWND hWnd, LPCWSTR classList)
 {
 	if (classList && wcscmp(classList, L"ScrollBar") == 0
-		&& global::g_darkModeSupported && _ShouldAppsUseDarkMode()
-		&& !IsHighContrast())
+		&& global::g_darkModeSupported && CDwmHelper::IsWindowsDarkMode())
 	{
 		hWnd = nullptr;
 		classList = L"Explorer::ScrollBar";
@@ -420,15 +434,36 @@ bool CDwmHelper::IsHighContrast()
 		&& (contrast.dwFlags & HCF_HIGHCONTRASTON);
 }
 
+static bool ReadThemeDword(LPCWSTR path, LPCWSTR name, DWORD& value)
+{
+	HKEY key = nullptr;
+	if (RegOpenKeyExW(HKEY_CURRENT_USER, path, 0, KEY_QUERY_VALUE, &key) != ERROR_SUCCESS)
+		return false;
+	DWORD type = 0, size = sizeof(value);
+	const auto result = RegQueryValueExW(key, name, nullptr, &type,
+		reinterpret_cast<BYTE*>(&value), &size);
+	RegCloseKey(key);
+	return result == ERROR_SUCCESS && type == REG_DWORD && size == sizeof(value);
+}
+
 bool CDwmHelper::IsWindowsDarkMode()
 {
+	if (IsHighContrast())
+		return false;
 	if (global::g_darkModeSupported)
-		return _ShouldAppsUseDarkMode() && !IsHighContrast();
+	{
+		if (gpSet && gpSet->nTheme == theme_Dark)
+			return true;
+		if (gpSet && gpSet->nTheme == theme_Light)
+			return false;
+		return _ShouldAppsUseDarkMode();
+	}
+	if (global::g_buildNumber < 17763)
+		return false;
 
-	DWORD light = 1, size = sizeof(light);
-	return !IsHighContrast()
-		&& RegGetValueW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-			L"AppsUseLightTheme", RRF_RT_REG_DWORD, nullptr, &light, &size) == ERROR_SUCCESS
+	DWORD light = 1;
+	return ReadThemeDword(L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+			L"AppsUseLightTheme", light)
 		&& light == 0;
 }
 
@@ -442,7 +477,7 @@ void CDwmHelper::ApplyPopupMenuTheme(HWND owner)
 	if (!global::g_darkModeSupported)
 		return;
 
-	const bool dark = _ShouldAppsUseDarkMode() && !IsHighContrast();
+	const bool dark = IsWindowsDarkMode();
 	if (owner)
 		AllowDarkModeForWindow(owner, dark);
 
@@ -456,9 +491,8 @@ void CDwmHelper::ApplyPopupMenuTheme(HWND owner)
 
 COLORREF CDwmHelper::WindowsAccentColor()
 {
-	DWORD color = 0, size = sizeof(color);
-	if (RegGetValueW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\DWM",
-			L"AccentColor", RRF_RT_REG_DWORD, nullptr, &color, &size) == ERROR_SUCCESS)
+	DWORD color = 0;
+	if (ReadThemeDword(L"Software\\Microsoft\\Windows\\DWM", L"AccentColor", color))
 		return color & 0x00FFFFFF;
 	return GetSysColor(COLOR_HIGHLIGHT);
 }

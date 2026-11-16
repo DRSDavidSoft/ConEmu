@@ -48,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SettingsStorage.h"
 #include "IatHook.h"
 #include "DarkMode.h"
+#include "Options.h"
 #include "ToolImg.h"
 
 namespace {
@@ -71,12 +72,14 @@ struct RestoreDarkModeState
 	fnGetIsImmersiveColorUsingHighContrast highContrast = _GetIsImmersiveColorUsingHighContrast;
 	bool supported = global::g_darkModeSupported;
 	bool enabled = global::g_darkModeEnabled;
+	BYTE theme = gpSet->nTheme;
 	~RestoreDarkModeState()
 	{
 		_ShouldAppsUseDarkMode = shouldAppsUseDarkMode;
 		_GetIsImmersiveColorUsingHighContrast = highContrast;
 		global::g_darkModeSupported = supported;
 		global::g_darkModeEnabled = enabled;
+		gpSet->nTheme = theme;
 	}
 };
 }
@@ -112,6 +115,22 @@ TEST(DarkTitleBar, NativeWindowTracksAppTheme)
 	EXPECT_EQ(S_OK, gpConEmu->DwmGetWindowAttribute(window, 20, &dark, sizeof(dark)));
 	EXPECT_EQ(FALSE, dark);
 	DestroyWindow(window);
+}
+
+TEST(DarkTitleBar, ThemeOverrideRespectsHighContrastAndAuto)
+{
+	RestoreDarkModeState restore;
+	global::g_darkModeSupported = true;
+	_ShouldAppsUseDarkMode = TestAppsUseLightMode;
+	gpSet->nTheme = theme_Dark;
+	EXPECT_EQ(!CDwmHelper::IsHighContrast(), CDwmHelper::IsWindowsDarkMode());
+	_ShouldAppsUseDarkMode = TestAppsUseDarkMode;
+	gpSet->nTheme = theme_Light;
+	EXPECT_FALSE(CDwmHelper::IsWindowsDarkMode());
+	gpSet->nTheme = theme_Auto;
+	EXPECT_EQ(!CDwmHelper::IsHighContrast(), CDwmHelper::IsWindowsDarkMode());
+	_ShouldAppsUseDarkMode = TestAppsUseLightMode;
+	EXPECT_FALSE(CDwmHelper::IsWindowsDarkMode());
 }
 
 TEST(DarkScrollBar, MissingImportDirectoryIsSafe)
