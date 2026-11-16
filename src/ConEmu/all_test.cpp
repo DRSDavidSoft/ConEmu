@@ -207,6 +207,13 @@ TEST(DarkControls, NativeControlsRenderDarkAndReturnToLight)
 		0, 120, 100, 30, parent, nullptr, GetModuleHandle(nullptr), nullptr);
 	SetWindowSubclass(preview, TestPalettePreview, 1, 0);
 	DarkMode::ApplyDialog(parent);
+	const bool checkCaption = global::g_buildNumber >= 22000;
+	BOOL darkCaption = FALSE;
+	if (checkCaption)
+	{
+		EXPECT_EQ(S_OK, gpConEmu->DwmGetWindowAttribute(parent, 20, &darkCaption, sizeof(darkCaption)));
+		EXPECT_EQ(TRUE, darkCaption);
+	}
 	const HDC screen = GetDC(nullptr), dc = CreateCompatibleDC(screen);
 	const HBITMAP bitmap = CreateCompatibleBitmap(screen, 100, 30);
 	const HGDIOBJ old = SelectObject(dc, bitmap);
@@ -221,6 +228,11 @@ TEST(DarkControls, NativeControlsRenderDarkAndReturnToLight)
 	EXPECT_EQ(RGB(255,100,0), GetPixel(dc, 99, 29));
 	_ShouldAppsUseDarkMode = TestAppsUseLightMode;
 	DarkMode::ApplyDialog(parent);
+	if (checkCaption)
+	{
+		EXPECT_EQ(S_OK, gpConEmu->DwmGetWindowAttribute(parent, 20, &darkCaption, sizeof(darkCaption)));
+		EXPECT_EQ(FALSE, darkCaption);
+	}
 	EXPECT_FALSE(global::g_darkModeEnabled);
 	EXPECT_EQ(nullptr, DarkMode::ControlColor(label, dc, WM_CTLCOLORSTATIC));
 	SelectObject(dc, old); DeleteObject(bitmap); DeleteDC(dc); ReleaseDC(nullptr, screen);
