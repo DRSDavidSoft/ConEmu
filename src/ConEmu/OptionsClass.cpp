@@ -2054,6 +2054,17 @@ void CSettings::ApplySettingsTheme(HWND dialog)
 {
 	gpConEmu->ApplyPopupMenuTheme(dialog);
 	DarkMode::ApplyDialog(dialog);
+	if (!global::g_darkModeSupported || !gpSetCls)
+		return;
+	const DWORD balloon = gpSetCls->BalloonStyle();
+	for (const HWND tip : {gpSetCls->hwndTip, gpSetCls->hwndBalloon, gpSetCls->hwndConFontBalloon})
+	{
+		if (!tip || !IsWindow(tip)) continue;
+		const DWORD style = GetWindowLong(tip, GWL_STYLE);
+		const DWORD themed = (style & ~TTS_BALLOON) | balloon;
+		if (style != themed) SetWindowLong(tip, GWL_STYLE, themed);
+		DarkMode::ApplyTooltip(tip);
+	}
 }
 
 INT_PTR CSettings::SettingsThemeBrush(UINT message, HDC dc, HWND control, bool hyperlink)
@@ -2112,6 +2123,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 			ApplySettingsTheme(hWnd2);
 			break;
 
+		case WM_THEMECHANGED:
 		case WM_SETTINGCHANGE:
 			ApplySettingsTheme(hWnd2);
 			break;
@@ -2795,6 +2807,10 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 
 DWORD CSettings::BalloonStyle()
 {
+	// Native dark balloons can draw a light tail behind multiline help.
+	if (global::g_darkModeEnabled)
+		return 0;
+
 	//грр, Issue 886, и подсказки нифига не видны
 	//[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced]
 	//"EnableBalloonTips"=0
@@ -2830,6 +2846,7 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 			                                    CW_USEDEFAULT, CW_USEDEFAULT,
 			                                    ghOpWnd, nullptr,
 			                                    g_hInstance, nullptr);
+			DarkMode::ApplyTooltip(hwndConFontBalloon);
 			SetWindowPos(hwndConFontBalloon, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 			// Set up tool information.
 			// In this case, the "tool" is the entire parent window.
@@ -2861,6 +2878,7 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 			                             CW_USEDEFAULT, CW_USEDEFAULT,
 			                             ghOpWnd, nullptr,
 			                             g_hInstance, nullptr);
+			DarkMode::ApplyTooltip(hwndBalloon);
 			SetWindowPos(hwndBalloon, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 			// Set up tool information.
 			// In this case, the "tool" is the entire parent window.
@@ -2887,6 +2905,7 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 			                         CW_USEDEFAULT, CW_USEDEFAULT,
 			                         ghOpWnd, nullptr,
 			                         g_hInstance, nullptr);
+			DarkMode::ApplyTooltip(hwndTip);
 			SetWindowPos(hwndTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
 			SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 30000);
 		}
