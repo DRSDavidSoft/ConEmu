@@ -3,15 +3,11 @@
 #include <fstream>
 #include <string>
 #include <windows.h>
-int wmain(int argc, wchar_t **argv)
+#include "ConPtyTestConsole.h"
+int RunSessionTest(wchar_t **argv)
 {
-    if (argc != 4)
-        return 2;
     for (const auto suffix : {L".ready", L".size", L".input", L".dsr"})
         DeleteFileW((std::wstring(argv[3]) + suffix).c_str());
-    FreeConsole();
-    if (!AllocConsole())
-        return 3;
     ShowWindow(GetConsoleWindow(), SW_HIDE);
     HANDLE outputHandle = GetStdHandle(STD_OUTPUT_HANDLE), inputHandle = GetStdHandle(STD_INPUT_HANDLE);
     SMALL_RECT initial{0, 0, 79, 24};
@@ -123,4 +119,9 @@ int wmain(int argc, wchar_t **argv)
     CloseHandle(sessionProcess.hThread);
     CloseHandle(sessionProcess.hProcess);
     return failures ? 1 : 0;
+}
+
+int wmain(int argc, wchar_t **argv)
+{
+    return RunConPtyConsoleTest(argc, argv, 4, RunSessionTest);
 }

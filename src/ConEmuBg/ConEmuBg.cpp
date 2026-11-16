@@ -2947,7 +2947,7 @@ void StartPlugin(BOOL bConfigure)
 
 #if defined(_M_ARM64) || defined(__aarch64__)
 	// Far can load this plugin after ConEmu when the loader hook is unavailable.
-	if (!gfRegisterBackground)
+	if (!gfRegisterBackground && !GetModuleHandleW(ConEmuHk_64_DLL))
 	{
 		if (const HMODULE conemu = GetModuleHandleW(L"ConEmu.arm64.dll"))
 			gfRegisterBackground = reinterpret_cast<RegisterBackground_t>(GetProcAddress(conemu, "RegisterBackground"));

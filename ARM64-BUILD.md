@@ -7,10 +7,13 @@ without spaces for the existing GNU Make rules.
 ```sh
 git submodule update --init --recursive
 export PATH="/path/to/llvm-mingw/bin:$PATH"
+export DETOURS_LIB="/path/to/arm64/libdetours.a"
+export DETOURS_INCLUDE="/path/to/detours/src"
 sh build-arm64.sh
 ```
 
-The script builds the GUI, console executable, server DLL, and the Far plugins.
+The release configuration builds the GUI, console executable, server DLL,
+native ConEmuHk, and the Far plugins.
 The package includes ConEmuBg, ConEmuLn, and ConEmuTh with its GDI+, ICO, and
 PE thumbnail modules. Keep their subdirectories and resource files together.
 The files to install are under `Release-arm64/package`. Set `BUILD_DIR` to an
@@ -31,9 +34,20 @@ parallel Make jobs.
    using the default left-drag binding. Hold Ctrl after the drag starts and
    drop in an Explorer folder.
 
-The ARM64 build disables injection and uses the Far plugin's IPC for panel
-information and drag operations. Features that require `ConEmuHk` are
-unavailable in this build.
+### Native ARM64 hook
+
+Set `DETOURS_LIB` to the absolute path of an ARM64 Microsoft Detours static
+library and `DETOURS_INCLUDE` to the absolute path of the matching header
+directory before running `build-arm64.sh`. The port was tested with Detours
+commit `1dbd4ea281d73d478aa8d09a8b83fbd265f715f7`. Use a fresh `BUILD_DIR` for this
+build so the hook DLL and the matching GUI and server stay together.
+Enable **Inject ConEmuHk** for classic console sessions. The native loader
+recognizes native ARM64 processes. An emulated x86 or x64 process continues
+without native ARM64 injection.
+
+The ARM64 release ZIP uses the same update feed as x86 and x64.
+Install the first combined-release ZIP manually to migrate an installation
+from the former ARM64 hook channel.
 
 ## Explicit shell integration without ConEmuHk
 

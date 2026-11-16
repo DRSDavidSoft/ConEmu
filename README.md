@@ -2,11 +2,13 @@
 
 ConEmu is a terminal emulator for Windows. It brings multiple console sessions together in one customizable window, with tabs and split panes. You can run Command Prompt, PowerShell, Bash, Far Manager, and other console applications side by side. ConEmu also supports configurable hotkeys, color schemes, and a drop-down terminal that you can show or hide with a shortcut.
 
-This fork adds native Windows ARM64 support, Far Manager integration, Windows theming, and an optional ConPTY mode without ConEmuHk.
+This fork adds native Windows ARM64 support with ConEmuHk, Far Manager integration, Windows theming, and an optional ConPTY mode.
 
 ## Download
 
 [Download ZIPs for ARM64, x86, and x64](https://github.com/Sim-md/ConEmu/releases). Choose the ZIP for your architecture under **Assets**. GitHub Actions publishes new ZIPs after successful builds and tests on the [main branch](https://github.com/Sim-md/ConEmu/tree/main).
+
+All three builds use the fork's [version.ini](https://raw.githubusercontent.com/Sim-md/ConEmu/update-feed/version.ini). Each ZIP includes ConEmuHk for its architecture. Earlier ARM64 installations switch to the common channel by installing the first combined-release ARM64 ZIP manually. Later updates install after confirmation, verify SHA-256 and the package architecture, and roll back file replacements if an install fails. Use one GUI architecture per installation directory. Start ConEmu as administrator for updates in Program Files.
 
 ## Build and test
 

@@ -1027,7 +1027,7 @@ int WriteOutput(LPCWSTR pszText, DWORD cchLen /*= -1*/, DWORD* pdwWritten /*= nu
 		typedef BOOL (WINAPI* WriteProcessedA_t)(LPCSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, UINT Stream);
 		static WriteProcessed_t WriteProcessed = nullptr;
 		static WriteProcessedA_t WriteProcessedA = nullptr;
-#if !defined(__aarch64__) && !defined(_M_ARM64)
+#if (!defined(__aarch64__) && !defined(_M_ARM64)) || defined(CONEMU_ARM64_HOOKS)
 		if (bProcessed && (!WriteProcessed || !WriteProcessedA))
 		{
 			//_ASSERTE(FALSE && "Continue to load ConEmuHk");

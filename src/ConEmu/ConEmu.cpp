@@ -941,6 +941,9 @@ bool CConEmuMain::CheckRequiredFiles()
 #if defined(__aarch64__) || defined(_M_ARM64)
         {64, true, ConEmuC_64_EXE},
         {64, true, ConEmuCD_64_DLL},
+#if defined(CONEMU_ARM64_HOOKS)
+        {64, gpSet->isUseInjects, ConEmuHk_64_DLL},
+#endif
 #else
 		{32, true, ConEmuC_32_EXE},
 		{64, true, ConEmuC_64_EXE},
@@ -961,7 +964,11 @@ bool CConEmuMain::CheckRequiredFiles()
 	uint64_t nFileSize = 0;
 	size_t missedRequired = 0;
 	// on 32bit os we check only ConEmuHk_32_DLL
+#if defined(CONEMU_ARM64_HOOKS)
+	const size_t countToDisableInjects = 1;
+#else
 	const size_t countToDisableInjects = isWin64 ? 2 : 1;
+#endif
 
 	for (const auto& requiredFile : requiredFiles)
 	{
@@ -1027,7 +1034,7 @@ bool CConEmuMain::CheckRequiredFiles()
 
 bool CConEmuMain::CanUseInjects() const
 {
-#if defined(__aarch64__) || defined(_M_ARM64)
+#if (defined(__aarch64__) || defined(_M_ARM64)) && !defined(CONEMU_ARM64_HOOKS)
 	return false;
 #else
 	return !mb_DontUseInjects;

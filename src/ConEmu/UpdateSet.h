@@ -44,6 +44,7 @@ public:
 	wchar_t *szUpdateVerLocation = nullptr; // ConEmu latest version location info
 	LPCWSTR UpdateVerLocation() const;
 	static LPCWSTR UpdateVerLocationDefault();
+	bool UsesForkUpdateFeed() const;
 	void SetUpdateVerLocation(LPCWSTR asNewIniLocation);
 	bool IsVerLocationDeprecated(LPCWSTR asNewIniLocation) const;
 

@@ -182,3 +182,19 @@ TEST(WFiles, RejectIncompleteUtf16LeCodeUnit)
 	DWORD size = 0, error = 0;
 	EXPECT_EQ(ReadTextFile(tempFile.GetFilePath(), (1 << 20), read, size, error), -7);
 }
+
+TEST(WFiles, WriteUtf8NoBom)
+{
+	constexpr wchar_t expected[] = L"#\u00C6\u039E\u0429\u6587.";
+	auto file = WriteBinary(GetTestFileName(), "", 0);
+	file.CloseFile();
+
+	DWORD error = 0;
+	const int written = WriteTextFile(file.GetFilePath(), expected, countof(expected) - 1, CP_UTF8, false, &error);
+	ASSERT_EQ(written, 11) << "Windows error: " << error;
+
+	CEStr actual;
+	DWORD length = 0;
+	ASSERT_EQ(ReadTextFile(file.GetFilePath(), 1024, actual, length, error, CP_UTF8), 0);
+	EXPECT_STREQ(actual.c_str(), expected);
+}

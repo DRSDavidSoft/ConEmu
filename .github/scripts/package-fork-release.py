@@ -2,6 +2,7 @@
 
 import hashlib
 from pathlib import Path
+import re
 import struct
 import sys
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -26,7 +27,7 @@ def add_binary(files, root, source, destination, arch):
     files[destination] = path
 
 
-def package(artifacts, output, sha, arch):
+def package(artifacts, output, sha, arch, version):
     files = {}
     arm = arch == "arm64"
     build = artifacts / ("arm64/package" if arm else f"binaries-{arch}")
@@ -38,8 +39,7 @@ def package(artifacts, output, sha, arch):
         root = build if arm else artifacts / f"binaries-{runtime}"
         bits = "" if runtime == "x86" else "64"
         names = [f"ConEmuC{bits}.exe", f"ConEmuCD{bits}.dll"]
-        if not arm:
-            names.append(f"ConEmuHk{bits}.dll")
+        names.append(f"ConEmuHk{bits}.dll")
         for name in names:
             path = f"ConEmu/{name}"
             add_binary(files, root, path, path, runtime)
@@ -55,6 +55,10 @@ def package(artifacts, output, sha, arch):
 
     for name in ("ConEmu.l10n", "License.txt", "Scripts/ConEmu.NoHooks.bash", "Scripts/ConEmu.NoHooks.psm1"):
         files[f"ConEmu/{name}"] = Path("Release/ConEmu") / name
+    updater = "ConEmu/Scripts/ForkUpdate.ps1"
+    files[updater] = Path("Release") / updater
+    if arm:
+        files["ConEmu/Detours-LICENSE.txt"] = build / "ConEmu/Detours-LICENSE.txt"
     files["ConEmu/Unicode-LICENSE.txt"] = Path("src/common/Unicode-LICENSE.txt")
     resources = Path("Release/plugins/ConEmu")
     for pattern in ("**/*.lng", "Background/Background.xml", "Background/img/*.png"):
@@ -63,7 +67,7 @@ def package(artifacts, output, sha, arch):
     for name in ("ARM64-BUILD.md", "CONPTY.md", "FAR-SCROLLBACK.md", "SECURITY-CHANGES.txt"):
         files[name] = Path(name)
 
-    archive = output / f"ConEmu-{sha[:7]}-{arch}.zip"
+    archive = output / f"ConEmu-{version}-{sha[:7]}-{arch}.zip"
     with ZipFile(archive, "w", ZIP_DEFLATED) as zip_file:
         for name, path in sorted(files.items()):
             zip_file.write(path, name)
@@ -74,13 +78,38 @@ def package(artifacts, output, sha, arch):
     return archive
 
 
+def release_version():
+    header = Path("src/ConEmu/version.h").read_text(encoding="ascii")
+    parts = re.search(
+        r'^#define MVV_1 (\d{2})\n#define MVV_2 (\d{1,2})\n#define MVV_3 (\d{1,2})'
+        r'\n#define MVV_4 \d+\n#define MVV_4a "([a-z]?)"$',
+        header,
+        re.MULTILINE,
+    )
+    if parts is None or "#define MVV_git" in header:
+        raise ValueError("version.h must define a dated release version")
+    year, month, day, suffix = parts.groups()
+    return f"{year}{int(month):02}{int(day):02}{suffix}"
+
+
 def main():
     artifacts, output = map(Path, sys.argv[1:3])
     sha = sys.argv[3]
+    tag = sys.argv[4]
+    if not re.fullmatch(rf"ci-{sha[:7]}-[0-9]+-[0-9]+", tag):
+        raise ValueError(f"Invalid CI release tag: {tag}")
     output.mkdir()
-    archives = [package(artifacts, output, sha, arch) for arch in MACHINES]
-    checksums = [f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}" for path in archives]
+    version = release_version()
+    archives = [package(artifacts, output, sha, arch, version) for arch in MACHINES]
+    digests = {arch: hashlib.sha256(path.read_bytes()).hexdigest() for arch, path in zip(MACHINES, archives)}
+    checksums = [f"{digests[arch]}  {path.name}" for arch, path in zip(MACHINES, archives)]
     (output / "SHA256SUMS.txt").write_text("\n".join(checksums) + "\n", encoding="ascii")
+    channels = ("Stable", "Preview", "Devel")
+    feed = "\n".join(f"[ConEmu_{channel}_2]\nversion={version}\n" for channel in channels)
+    for arch, path in zip(MACHINES, archives):
+        url = f"https://github.com/Sim-md/ConEmu/releases/download/{tag}/{path.name}"
+        feed += f"\n[ConEmu_{arch}]\nversion={version}\nsha256={digests[arch]}\nurl={url}\n"
+    (output / "version.ini").write_text(feed, encoding="ascii")
 
 
 if __name__ == "__main__":

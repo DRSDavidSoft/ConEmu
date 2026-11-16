@@ -40,19 +40,20 @@ ConEmuUpdateSettings::ConEmuUpdateSettings()
 
 LPCWSTR ConEmuUpdateSettings::UpdateVerLocation() const
 {
-	if (szUpdateVerLocation && *szUpdateVerLocation)
+	if (szUpdateVerLocation && *szUpdateVerLocation
+		&& lstrcmpi(szUpdateVerLocation, L"https://conemu.github.io/version.ini") != 0)
 		return szUpdateVerLocation;
 	return UpdateVerLocationDefault();
 }
 
 LPCWSTR ConEmuUpdateSettings::UpdateVerLocationDefault()
 {
-	static LPCWSTR pszDefault =
-		//L"file://C:\\ConEmu-Update\\version.ini"
-		//L"http://conemu.ru/version.ini"
-		L"https://conemu.github.io/version.ini"
-		;
-	return pszDefault;
+	return L"https://raw.githubusercontent.com/Sim-md/ConEmu/update-feed/version.ini";
+}
+
+bool ConEmuUpdateSettings::UsesForkUpdateFeed() const
+{
+	return lstrcmpi(UpdateVerLocation(), UpdateVerLocationDefault()) == 0;
 }
 
 bool ConEmuUpdateSettings::IsVerLocationDeprecated(LPCWSTR asNewIniLocation) const
@@ -309,6 +310,9 @@ bool ConEmuUpdateSettings::UpdatesAllowed(wchar_t (&szReason)[128])
 		wcscpy_c(szReason, L"Update.UseBuilds is not specified");
 		return false; // Не указано, какие сборки можно загружать
 	}
+
+	if (UsesForkUpdateFeed())
+		return true;
 
 	wchar_t szCPU[4] = L"";
 
