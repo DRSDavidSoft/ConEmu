@@ -320,6 +320,14 @@ bool GetConsoleChromeColors(COLORREF& background, COLORREF& foreground)
 	return true;
 }
 
+void ApplyTooltip(HWND tooltip)
+{
+	if (!tooltip || !global::g_darkModeSupported) return;
+	const bool dark = CDwmHelper::IsWindowsDarkMode();
+	AllowDarkModeForWindow(tooltip, dark);
+	gpConEmu->SetWindowTheme(tooltip, dark ? L"DarkMode_Explorer" : nullptr, nullptr);
+}
+
 void ApplyDialog(HWND dialog)
 {
 	if (!global::g_darkModeSupported) return;
