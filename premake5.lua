@@ -1,6 +1,7 @@
 -- ConEmu's solution generator script
 -- 1. Download premake5 from https://premake.github.io/download.html
--- 2. Run `premake5 vs2019`
+-- 2. Run `premake5 vs2019` (Premake 5.0.0-alpha15).
+-- The ConEmu and Tests source globs include new GUI .cpp and .h files.
 
 workspace "CE"
   configurations { "Release", "Debug", "Remote" }

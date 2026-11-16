@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Release|Win32">
@@ -322,6 +322,7 @@
     <ClInclude Include="ConEmu\ConfirmDlg.h" />
     <ClInclude Include="ConEmu\CreateProcess.h" />
     <ClInclude Include="ConEmu\CustomFonts.h" />
+    <ClInclude Include="ConEmu\DarkMode.h" />
     <ClInclude Include="ConEmu\DebugMsgLog.h" />
     <ClInclude Include="ConEmu\DefaultTerm.h" />
     <ClInclude Include="ConEmu\DlgItemHelper.h" />
@@ -331,8 +332,6 @@
     <ClInclude Include="ConEmu\DragDropData.h" />
     <ClInclude Include="ConEmu\DwmApi_Part.h" />
     <ClInclude Include="ConEmu\DwmHelper.h" />
-    <ClInclude Include="ConEmu\DarkMode.h" />
-    <ClInclude Include="ConEmu\IatHook.h" />
     <ClInclude Include="ConEmu\DynDialog.h" />
     <ClInclude Include="ConEmu\ErrorInfo.h" />
     <ClInclude Include="ConEmu\FindDlg.h" />
@@ -353,6 +352,7 @@
     <ClInclude Include="ConEmu\HotkeyList.h" />
     <ClInclude Include="ConEmu\Hotkeys.h" />
     <ClInclude Include="ConEmu\HtmlCopy.h" />
+    <ClInclude Include="ConEmu\IatHook.h" />
     <ClInclude Include="ConEmu\IconList.h" />
     <ClInclude Include="ConEmu\ImgButton.h" />
     <ClInclude Include="ConEmu\Inside.h" />
@@ -582,6 +582,7 @@
     <ClCompile Include="ConEmu\ConfirmDlg.cpp" />
     <ClCompile Include="ConEmu\CreateProcess.cpp" />
     <ClCompile Include="ConEmu\CustomFonts.cpp" />
+    <ClCompile Include="ConEmu\DarkMode.cpp" />
     <ClCompile Include="ConEmu\DefaultTerm.cpp" />
     <ClCompile Include="ConEmu\DlgItemHelper.cpp" />
     <ClCompile Include="ConEmu\DontEnable.cpp" />
@@ -589,7 +590,6 @@
     <ClCompile Include="ConEmu\DragDrop.cpp" />
     <ClCompile Include="ConEmu\DragDropData.cpp" />
     <ClCompile Include="ConEmu\DwmHelper.cpp" />
-    <ClCompile Include="ConEmu\DarkMode.cpp" />
     <ClCompile Include="ConEmu\DynDialog.cpp" />
     <ClCompile Include="ConEmu\DynDialog_test.cpp" />
     <ClCompile Include="ConEmu\ErrorInfo.cpp" />

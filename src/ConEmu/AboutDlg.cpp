@@ -1,4 +1,4 @@
-
+﻿
 // WM_DRAWITEM, SS_OWNERDRAW|SS_NOTIFY, Bmp & hBmp -> global vars
 // DPI resize.
 

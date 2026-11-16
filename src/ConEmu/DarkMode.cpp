@@ -1,4 +1,4 @@
-#define HIDE_USE_EXCEPTION_INFO
+﻿#define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
 #include <commctrl.h>
 #include <cmath>

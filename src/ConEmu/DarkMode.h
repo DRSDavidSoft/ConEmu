@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // Custom-control palette; light and high-contrast modes use system rendering.
 namespace DarkMode

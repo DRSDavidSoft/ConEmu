@@ -78,6 +78,9 @@
     <ClInclude Include="ConEmu\CustomFonts.h">
       <Filter>Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmu\DarkMode.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmu\DebugMsgLog.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -100,12 +103,6 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\DwmApi_Part.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="ConEmu\DarkMode.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="ConEmu\IatHook.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\DwmHelper.h">
@@ -169,6 +166,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\HtmlCopy.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\IatHook.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\IconList.h">
@@ -851,6 +851,9 @@
     <ClCompile Include="ConEmu\CustomFonts.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="ConEmu\DarkMode.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
     <ClCompile Include="ConEmu\DefaultTerm.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
@@ -867,9 +870,6 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\DragDropData.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\DarkMode.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\DwmHelper.cpp">
