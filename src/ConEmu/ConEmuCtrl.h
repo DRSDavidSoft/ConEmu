@@ -70,6 +70,7 @@ public:
 protected:
 	BOOL mb_InWinTabSwitch = FALSE;
 	BOOL mb_InCtrlTabSwitch = FALSE;
+	static void SwitchTabByHotkey(const ConEmuChord& chord, bool forward);
 
 	UINT mn_DoubleKeyConsoleNum = 0; // Previous VK
 	void ResetDoubleKeyConsoleNum(CRealConsole* pRCon = nullptr);

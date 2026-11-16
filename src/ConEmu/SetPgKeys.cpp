@@ -312,7 +312,7 @@ LRESULT CSetPgKeys::OnHotkeysNotify(HWND hDlg, WPARAM wParam, LPARAM lParam)
 
 		HWND hHk = GetDlgItem(hDlg, hkHotKeySelect);
 		BOOL bHotKeyEnabled = FALSE, bKeyListEnabled = FALSE, bModifiersEnabled = FALSE, bMacroEnabled = FALSE;
-		LPCWSTR pszLabel = L"Choose hotkey:";
+		UINT labelResource = 0;
 		LPCWSTR pszDescription = L"";
 		wchar_t szDescTemp[512];
 		DWORD VkMod = 0;
@@ -343,40 +343,33 @@ LRESULT CSetPgKeys::OnHotkeysNotify(HWND hDlg, WPARAM wParam, LPARAM lParam)
 				case chk_Global:
 				case chk_Local:
 				case chk_Task:
-					pszLabel = L"Choose hotkey:";
+				case chk_System:
 					VkMod = pk->GetVkMod();
 					bHotKeyEnabled = bKeyListEnabled = bModifiersEnabled = TRUE;
 					break;
 				case chk_Macro:
-					pszLabel = L"Choose hotkey:";
 					VkMod = pk->GetVkMod();
 					bHotKeyEnabled = bKeyListEnabled = bModifiersEnabled = bMacroEnabled = TRUE;
 					break;
 				case chk_Modifier:
-					pszLabel = L"Choose modifier:";
+					labelResource = lng_HotkeyChooseModifier;
 					VkMod = pk->GetVkMod();
 					bKeyListEnabled = TRUE;
 					break;
 				case chk_Modifier2:
-					pszLabel = L"Choose modifier:";
+					labelResource = lng_HotkeyChooseModifier;
 					VkMod = pk->GetVkMod();
 					bModifiersEnabled = TRUE;
 					break;
 				case chk_NumHost:
 				case chk_ArrHost:
-					pszLabel = L"Choose modifiers:";
+					labelResource = lng_HotkeyChooseModifiers;
 					VkMod = pk->GetVkMod();
 					_ASSERTE(VkMod);
 					bModifiersEnabled = TRUE;
 					break;
-				case chk_System:
-					pszLabel = L"Predefined:";
-					VkMod = pk->GetVkMod();
-					bHotKeyEnabled = bKeyListEnabled = bModifiersEnabled = 2;
-					break;
 				default:
 					_ASSERTE(0 && "Unknown HkType");
-					pszLabel = L"Unknown:";
 				}
 				//SetDlgItemText(hDlg, stHotKeySelect, psz);
 
@@ -425,12 +418,15 @@ LRESULT CSetPgKeys::OnHotkeysNotify(HWND hDlg, WPARAM wParam, LPARAM lParam)
 
 		//if (!mp_ActiveHotKey)
 		//{
-		SetDlgItemText(hDlg, stHotKeySelect, pszLabel);
-		EnableWindow(GetDlgItem(hDlg, stHotKeySelect), (bHotKeyEnabled || bKeyListEnabled || bModifiersEnabled));
+		CEStr hotkeyLabel, descriptionLabel;
+		SetDlgItemText(hDlg, stHotKeySelect, labelResource
+			? CLngRc::getRsrc(labelResource)
+			: CLngRc::getControl(stHotKeySelect, hotkeyLabel, L"Choose hotkey:"));
 		EnableWindow(GetDlgItem(hDlg, lbHotKeyList), (bKeyListEnabled==TRUE));
 		EnableWindow(hHk, (bHotKeyEnabled==TRUE));
-		EnableWindow(GetDlgItem(hDlg, stGuiMacro), (bMacroEnabled==TRUE));
-		SetDlgItemText(hDlg, stGuiMacro, bMacroEnabled ? L"GUI Macro:" : L"Description:");
+		SetDlgItemText(hDlg, stGuiMacro, bMacroEnabled
+			? CLngRc::getRsrc(lng_HotkeyGuiMacro)
+			: CLngRc::getControl(stGuiMacro, descriptionLabel, L"Description:"));
 		HWND hMacro = GetDlgItem(hDlg, tGuiMacro);
 		EnableWindow(hMacro, (mp_ActiveHotKey!=nullptr));
 		SendMessage(hMacro, EM_SETREADONLY, !bMacroEnabled, 0);
@@ -783,7 +779,7 @@ INT_PTR CSetPgKeys::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 
 			_ASSERTE((nModifers & 0xFF) == 0); // Модификаторы должны быть строго в старших 3-х байтах
 
-			if (mp_ActiveHotKey && (mp_ActiveHotKey->HkType != chk_Modifier) && (mp_ActiveHotKey->HkType != chk_System))
+			if (mp_ActiveHotKey && (mp_ActiveHotKey->HkType != chk_Modifier))
 			{
 				//if (mp_ActiveHotKey->VkModPtr)
 				//{

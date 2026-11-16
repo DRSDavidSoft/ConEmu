@@ -480,7 +480,7 @@ BEGIN
     GROUPBOX        "Confirm close (Press Enter or Esc to close console)",gbDefaultTermConfClose,9,131,366,31
     CONTROL         "Use existing ConEmu window if available",cbDefaultTerminalUseExisting,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,101,364,8
-    LTEXT           "If you want to start some command in the Windows standard console window from hooked executable when 'Default terminal' is enabled, just use ""-new_console:z"" switch.\r\nExample: ""cmd.exe -new_console:z""",stDefaultTerminalSwitchInfo,10,168,306,26
+    LTEXT           "If you want to start some command in the Windows standard console window from hooked executable when 'Default terminal' is enabled, just use ""-new_console:z"" switch.\r\nExample: ""cmd.exe -new_console:z""",stDefaultTerminalSwitchInfo,10,166,361,60
     CONTROL         "Enable logging of hooked processes (debug purposes)",cbDefaultTerminalDebugLog,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,115,364,8
 END
@@ -1216,13 +1216,13 @@ BEGIN
     CONTROL         "&Hide unassigned",cbHotkeysAssignedOnly,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,120,15,108,8
     CONTROL         "List1",lbConEmuHotKeys,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,8,30,367,172
     EDITTEXT        tHotkeysFilter,253,13,122,12,ES_AUTOHSCROLL
-    RTEXT           "Choose hotkey:",stHotKeySelect,9,210,64,8,WS_DISABLED
+    RTEXT           "Choose hotkey:",stHotKeySelect,9,210,64,8
     CONTROL         "",hkHotKeySelect,"msctls_hotkey32",WS_DISABLED | WS_BORDER | WS_TABSTOP,77,208,65,13
     COMBOBOX        lbHotKeyList,148,208,68,79,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        lbHotKeyMod1,237,208,44,79,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        lbHotKeyMod2,284,208,44,79,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        lbHotKeyMod3,331,208,44,79,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Description:",stGuiMacro,9,226,64,8,WS_DISABLED
+    RTEXT           "Description:",stGuiMacro,9,226,64,8
     EDITTEXT        tGuiMacro,77,224,279,12,ES_AUTOHSCROLL | WS_DISABLED
     PUSHBUTTON      "?",cbGuiMacroHelp,359,223,16,14,WS_DISABLED
 END

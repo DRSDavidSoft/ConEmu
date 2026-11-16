@@ -71,6 +71,22 @@ function Get-PackageBuild([string]$Path) {
     return ('{0:00}{1:00}{2:00}{3}' -f $v.FileMajorPart,$v.FileMinorPart,$v.FileBuildPart,$suffix)
 }
 
+function Wait-ForUpdateFile([string]$Target) {
+    # Console helpers and scanners may still hold files briefly after the GUI exits.
+    $timer = [Diagnostics.Stopwatch]::StartNew()
+    while ($true) {
+        try {
+            $probe = [IO.File]::Open($Target, 'Open', 'ReadWrite', 'None')
+            $probe.Dispose()
+            return
+        } catch [IO.IOException] {
+            $code = $_.Exception.HResult -band 0xffff
+            if ($code -notin 32,33 -or $timer.Elapsed.TotalSeconds -ge 15) { throw }
+            Start-Sleep -Milliseconds 250
+        }
+    }
+}
+
 function Set-UpdateFile([string]$Source, [string]$Target, [string]$Backup) {
     [IO.File]::Replace($Source, $Target, $Backup)
 }
@@ -141,8 +157,7 @@ function Install-ForkUpdate(
                     $target = Join-Path $Root $name
                     Assert-OrdinaryPath $target
                     if (![IO.File]::Exists($target)) { throw "Missing installed file: $target" }
-                    $probe = [IO.File]::Open($target, 'Open', 'ReadWrite', 'None')
-                    $probe.Dispose()
+                    Wait-ForUpdateFile $target
                     $matchesInZip = @($zip.Entries | Where-Object FullName -ieq $name)
                     if ($matchesInZip.Count -ne 1 -or $matchesInZip[0].Length -le 0 -or
                         $matchesInZip[0].Length -gt 64MB) {

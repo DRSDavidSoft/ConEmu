@@ -6060,7 +6060,11 @@ bool CConEmuMain::OnScClose()
 
 	// lbMsgConfirmed - был ли показан диалог подтверждения, или юзер не включил эту опцию
 	if (!CVConGroup::OnCloseQuery(&lbMsgConfirmed))
-		return false; // не закрывать
+	{
+		if (gpUpd)
+			gpUpd->CancelPendingForkUpdate();
+		return false;
+	}
 
 	return CVConGroup::DoCloseAllVCon(lbMsgConfirmed);
 }

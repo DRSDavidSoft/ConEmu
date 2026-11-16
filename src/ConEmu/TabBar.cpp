@@ -2072,33 +2072,12 @@ bool CTabBarClass::CanActivateTab(int nTabIdx)
 	return true;
 }
 
-bool CTabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
+void CTabBarClass::SwitchByPosition(bool forward)
 {
-	//if (!IsShown()) return FALSE; -- всегда. Табы теперь есть в памяти
-	bool lbAltPressed = isPressed(VK_MENU);
-
-	if (messg == WM_KEYDOWN && wParam == VK_TAB)
-	{
-		if (!isPressed(VK_SHIFT))
-			SwitchNext(lbAltPressed);
-		else
-			SwitchPrev(lbAltPressed);
-
-		return true;
-	}
-	else if (mb_InKeySwitching && messg == WM_KEYDOWN && !lbAltPressed
-	        && (wParam == VK_UP || wParam == VK_DOWN || wParam == VK_LEFT || wParam == VK_RIGHT))
-	{
-		bool bRecent = gpSet->isTabRecent;
-		gpSet->isTabRecent = false;
-		bool bForward = (wParam == VK_RIGHT || wParam == VK_DOWN);
-		Switch(bForward);
-		gpSet->isTabRecent = bRecent;
-
-		return true;
-	}
-
-	return false;
+	const bool recent = gpSet->isTabRecent;
+	gpSet->isTabRecent = false;
+	Switch(forward);
+	gpSet->isTabRecent = recent;
 }
 
 void CTabBarClass::SetRedraw(bool abEnableRedraw)

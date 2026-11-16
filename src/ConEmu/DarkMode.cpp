@@ -260,13 +260,21 @@ BOOL CALLBACK ApplyControl(HWND window, LPARAM)
 		&& !CustomStatic(window)) kind = 4;
 	else if (IsClass(window, HOTKEY_CLASS)) kind = 5;
 	SetWindowSubclass(window, ControlProc, SubclassId, kind);
-	const wchar_t* theme = dark ? L"DarkMode_Explorer" : nullptr;
-	if (IsClass(window, L"Edit") || IsClass(window, L"ComboBox")) theme = dark ? L"DarkMode_CFD" : nullptr;
+	const bool edit = IsClass(window, L"Edit");
+	const wchar_t* theme = nullptr;
+	if (dark)
+	{
+		theme = edit || IsClass(window, L"ComboBox") ? L"DarkMode_CFD" : L"DarkMode_Explorer";
+		if (gOSVer.dwBuildNumber >= 26300 && (IsClass(window, L"ListBox")
+			|| (edit && (GetWindowLong(window, GWL_STYLE) & (WS_HSCROLL | WS_VSCROLL)))))
+			theme = L"DarkMode_DarkTheme";
+	}
 	gpConEmu->SetWindowTheme(window, theme, nullptr);
 	if (IsClass(window, WC_TREEVIEW))
 	{
 		TreeView_SetBkColor(window, dark ? Control : GetSysColor(COLOR_WINDOW));
 		TreeView_SetTextColor(window, dark ? Text : GetSysColor(COLOR_WINDOWTEXT));
+		TreeView_SetLineColor(window, dark ? Border : CLR_DEFAULT);
 	}
 	if (IsClass(window, WC_LISTVIEW))
 	{
