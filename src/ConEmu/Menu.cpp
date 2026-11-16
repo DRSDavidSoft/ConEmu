@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "LngRc.h"
 #include "Macro.h"
 #include "Menu.h"
+#include "DarkMode.h"
 #include "Menu.h"
 #include "Options.h"
 #include "OptionsClass.h"
@@ -1436,7 +1437,7 @@ void CConEmuMenu::ShowMenuHint(LPCWSTR pszText, POINT* ppt)
 		{
 			if (gpConEmu->mp_Tip)
 			{
-				gpConEmu->mp_Tip->ShowTip(ghWnd, ghWnd, pszText, TRUE, pt, g_hInstance);
+				gpConEmu->mp_Tip->ShowTip(ghWnd, ghWnd, pszText, TRUE, pt, g_hInstance, DarkMode::ApplyTooltip);
 				last = eTip;
 			}
 		}

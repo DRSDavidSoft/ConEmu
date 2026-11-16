@@ -507,6 +507,10 @@
 #define cbComspecTest                   2162
 #define gbFeatureMisc                   2163
 #define gbFeatureAppear                 2164
+#define gbTheme                         3113
+#define rbThemeDark                     3114
+#define rbThemeLight                    3115
+#define rbThemeAuto                     3116
 #define gbFeatureCaption                2165
 #define gbFeatureClipboard              2166
 #define cbClipConfirmEnter              2171

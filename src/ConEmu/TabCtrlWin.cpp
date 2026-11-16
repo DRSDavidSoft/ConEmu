@@ -797,12 +797,16 @@ void CTabPanelWin::ApplyTheme()
 {
 	const bool changed = mb_DarkMode != global::g_darkModeEnabled;
 	mb_DarkMode = global::g_darkModeEnabled;
+	DarkMode::ApplyTooltip(mh_TabTip);
+	DarkMode::ApplyTooltip(mh_Balloon);
 	SendMessage(mh_Rebar, RB_SETBKCOLOR, 0, GetTabPalette().strip);
 	if (changed && mh_Toolbar)
 	{
 		ShowToolsPane(false);
 		ShowToolsPane(true);
 	}
+	if (mh_Toolbar)
+		DarkMode::ApplyTooltip(reinterpret_cast<HWND>(SendMessage(mh_Toolbar, TB_GETTOOLTIPS, 0, 0)));
 	if (mp_Find) SendMessage(mp_Find->GetHWND(), WM_THEMECHANGED, 0, 0);
 	RedrawWindow(mh_Rebar, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
 }
@@ -963,6 +967,7 @@ HWND CTabPanelWin::CreateToolbar()
 
 	WNDPROC defaultProc = (WNDPROC)SetWindowLongPtr(mh_Toolbar, GWLP_WNDPROC, (LONG_PTR)_ToolProc);
 	SetObj(mh_Toolbar, this, defaultProc);
+	DarkMode::ApplyTooltip(reinterpret_cast<HWND>(SendMessage(mh_Toolbar, TB_GETTOOLTIPS, 0, 0)));
 	AllowDarkModeForWindow(mh_Toolbar, global::g_darkModeEnabled);
 	gpConEmu->SetWindowTheme(mh_Toolbar, global::g_darkModeEnabled ? L"DarkMode_Explorer" : nullptr, nullptr);
 

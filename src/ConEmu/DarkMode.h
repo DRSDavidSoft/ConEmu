@@ -4,6 +4,7 @@
 namespace DarkMode
 {
 	void ApplyDialog(HWND dialog);
+	void ApplyTooltip(HWND tooltip);
 	bool GetConsoleChromeColors(COLORREF& background, COLORREF& foreground);
 	bool ProcessDialogMessage(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam, INT_PTR& result);
 	HBRUSH ControlColor(HWND control, HDC dc, UINT message);
