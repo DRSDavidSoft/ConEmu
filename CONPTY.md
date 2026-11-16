@@ -21,6 +21,13 @@ same package: the Unicode/history shared-frame protocol is version 2.
 
 ## Terminal behavior
 
+On Windows 11 22H2 or newer, select Acrylic, Mica, or Mica Alt in
+**Settings > Transparency > Window material**. The selected material extends
+behind ConPTY's default terminal background and padding. Explicit ANSI
+backgrounds, reverse video, and selections remain opaque. Windows system
+transparency effects must be enabled. A window with a visible classic console
+or a background image keeps the terminal area solid.
+
 - ANSI, xterm-256 and TrueColor foreground/background, cursor movement, erase,
   terminal reports, resize and primary/alternate screens.
 - Up to 2000 primary-screen history rows, also bounded by 262144 cells. Width

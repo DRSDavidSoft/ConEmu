@@ -188,6 +188,8 @@
 #define cbHideCaptionAlways             1569
 #define cbTryToCenter                   1570
 #define cbAlwaysOnTop                   1572
+#define lbWindowBackdrop                3801
+#define stWindowBackdrop                3802
 #define cbUserScreenTransparent         1573
 #define cbTransparent                   1574
 #define tBgImageColors                  1575
@@ -776,6 +778,7 @@
 #define tInsideSyncDir                  2479
 #define cbNumberInCaption               2480
 #define cbTabsLocationBottom            2481
+#define cbTabsUseWindowsAccent          3117
 #define rbTabsLocationTop               2482
 #define rbTabsLocationBottom            2483
 #define vkGlobalRestore                 2484
@@ -1366,7 +1369,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        248
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3117
+#define _APS_NEXT_CONTROL_VALUE         3118
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

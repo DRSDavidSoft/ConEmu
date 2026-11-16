@@ -378,6 +378,8 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 				}
 				else
 				{
+					if (pcolSrc->bk_valid || (pcolSrc->style & (AI_STYLE_EXPLICIT_BG | AI_STYLE_REVERSE)))
+						lca.Flags |= CharAttr_OpaqueBackground;
 					if (pcolSrc->style & AI_STYLE_REVERSE)
 						inversed = true;
 

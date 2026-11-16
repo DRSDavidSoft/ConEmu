@@ -89,14 +89,22 @@ static TabPalette GetTabPalette()
 			GetSysColor(COLOR_BTNTEXT), GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_WINDOWTEXT)};
 
 	const bool dark = CDwmHelper::IsWindowsDarkMode();
+	if (gpSet && gpSet->isTabsUseWindowsAccent)
+	{
+		const auto accent = CDwmHelper::WindowsAccentColor();
+		const auto strip = dark ? CDwmHelper::BlendColors(DarkMode::Background, accent, 20) : accent;
+		const auto inactive = dark ? CDwmHelper::BlendColors(RGB(38, 38, 38), accent, 20)
+			: CDwmHelper::BlendColors(accent, RGB(255, 255, 255), 20);
+		const auto active = dark ? CDwmHelper::BlendColors(DarkMode::Control, accent, 30)
+			: CDwmHelper::BlendColors(accent, RGB(0, 0, 0), 35);
+		return {strip, inactive, active, ContrastingText(inactive), ContrastingText(active), ContrastingText(strip)};
+	}
 	if (dark)
 		return {DarkMode::Background, RGB(38, 38, 38), DarkMode::Control,
 			DarkMode::Text, DarkMode::Text, DarkMode::Text};
 
-	const auto accent = CDwmHelper::WindowsAccentColor();
-	const auto inactive = CDwmHelper::BlendColors(accent, RGB(255, 255, 255), 20);
-	const auto active = CDwmHelper::BlendColors(accent, RGB(0, 0, 0), 35);
-	return {accent, inactive, active, ContrastingText(inactive), ContrastingText(active), ContrastingText(accent)};
+	return {GetSysColor(COLOR_BTNFACE), GetSysColor(COLOR_BTNFACE), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_BTNTEXT), GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_BTNTEXT)};
 }
 
 static void PaintConsoleTabs(HWND tabs, HDC dc)

@@ -48,6 +48,7 @@ typedef struct tag_CharAttr
 			#define CharAttr_DialogPanel    1 // Far Manager panels
 			#define CharAttr_DialogRect     2 // Flying dialog (over Panels or Editor/Viewer)
 			#define CharAttr_DialogVBorder  4 // Left or Right dialog edge
+			#define CharAttr_OpaqueBackground 8 // Explicit ANSI background, selection or reverse video
 			#define CharAttr_Transparent   16 // This cell may be marked as transparent (User Screen Transparency)
 			unsigned int Flags : 8; // Warning! These flags are used in "All" comparison
 			// *** End of All comparison

@@ -600,6 +600,7 @@ void Settings::InitSettings()
 	bgOperation = eUpLeft;
 	isBgPluginAllowed = 1;
 	nTransparent = nTransparentInactive = 255;
+	windowBackdrop = 0;
 	isTransparentSeparate = false;
 	//isColorKey = false;
 	//ColorKey = RGB(1,1,1);
@@ -774,6 +775,7 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_Time] = true;
 
 	isTabs = 1; nTabsLocation = 0; isTabIcons = true; isOneTabPerGroup = false;
+	isTabsUseWindowsAccent = false;
 	bActivateSplitMouseOver = 1; // 1 - always, 2 - Regarding Windows settings (Active window tracking)
 	isTabSelf = true; isTabRecent = true; isTabLazy = true;
 	nTabFlashChanged = 8;
@@ -2813,6 +2815,8 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"bgPluginAllowed", isBgPluginAllowed);
 		if (isBgPluginAllowed!=0 && isBgPluginAllowed!=1 && isBgPluginAllowed!=2) isBgPluginAllowed = 1;
 
+		reg->Load(L"WindowBackdrop", windowBackdrop);
+		if (windowBackdrop > 3) windowBackdrop = 0;
 		reg->Load(L"AlphaValue", nTransparent); MinMax(nTransparent, MIN_ALPHA_VALUE, 255);
 		reg->Load(L"AlphaValueSeparate", isTransparentSeparate);
 		if (!reg->Load(L"AlphaValueInactive", nTransparentInactive))
@@ -2885,6 +2889,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		//reg->Load(L"GUIpb", isGUIpb);
 		reg->Load(L"Tabs", isTabs);
 		reg->Load(L"TabsLocation", nTabsLocation);
+		reg->Load(L"TabsUseWindowsAccent", isTabsUseWindowsAccent);
 		reg->Load(L"TabIcons", isTabIcons);
 		reg->Load(L"OneTabPerGroup", isOneTabPerGroup);
 		reg->Load(L"ActivateSplitMouseOver", bActivateSplitMouseOver); MinMax(bActivateSplitMouseOver, 2);
@@ -3726,6 +3731,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"bgImageColors", nBgImageColors);
 		reg->Save(L"bgOperation", bgOperation);
 		reg->Save(L"bgPluginAllowed", isBgPluginAllowed);
+		reg->Save(L"WindowBackdrop", windowBackdrop);
 		reg->Save(L"AlphaValue", nTransparent);
 		reg->Save(L"AlphaValueSeparate", isTransparentSeparate);
 		reg->Save(L"AlphaValueInactive", nTransparentInactive);
@@ -3851,6 +3857,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		SaveStatusSettings(reg);
 		reg->Save(L"Tabs", isTabs);
 		reg->Save(L"TabsLocation", nTabsLocation);
+		reg->Save(L"TabsUseWindowsAccent", isTabsUseWindowsAccent);
 		reg->Save(L"TabIcons", isTabIcons);
 		reg->Save(L"OneTabPerGroup", isOneTabPerGroup);
 		reg->Save(L"ActivateSplitMouseOver", bActivateSplitMouseOver);

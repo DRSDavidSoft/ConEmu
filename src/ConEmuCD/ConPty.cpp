@@ -278,6 +278,7 @@ bool ConPtySession::Paint()
 			color.bk_color = cell.attr.crBackColor;
 			color.style = (cell.attr.isBold() ? AI_STYLE_BOLD : 0)
 				| (cell.attr.isItalic() ? AI_STYLE_ITALIC : 0)
+				| ((cell.attr.flags & condata::Attribute::fExplicitBackground) ? AI_STYLE_EXPLICIT_BG : 0)
 				| (cell.attr.isUnderscore() || cell.attr.hyperlinkId ? AI_STYLE_UNDERLINE : 0);
 			color.raw[7] = cell.attr.hyperlinkId;
 			color.raw[6] = cell.attr.graphemeId;
