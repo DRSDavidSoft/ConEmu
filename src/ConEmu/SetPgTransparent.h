@@ -49,7 +49,6 @@ public:
 public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
-	INT_PTR OnComboBox(HWND hDlg, WORD id, WORD code) override;
 
 protected:
 	// Members

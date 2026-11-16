@@ -484,13 +484,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= nullptr*/)
 	COLORREF crText = lbSysColor ? GetSysColor(COLOR_BTNTEXT) : lbFade ? gpSet->GetFadeColor(gpSet->nStatusBarLight) : gpSet->nStatusBarLight;
 	COLORREF crDash = lbSysColor ? GetSysColor(COLOR_3DSHADOW) : lbFade ? gpSet->GetFadeColor(gpSet->nStatusBarDark) : gpSet->nStatusBarDark;
 
-	if (gpConEmu->IsWindowBackdropActive())
-	{
-		crBack = RGB(0, 0, 0);
-		crText = global::g_darkModeEnabled ? DarkMode::Text : GetSysColor(COLOR_WINDOWTEXT);
-		crDash = global::g_darkModeEnabled ? RGB(105, 105, 105) : GetSysColor(COLOR_3DSHADOW);
-	}
-	else if (DarkMode::GetConsoleChromeColors(crBack, crText))
+	if (DarkMode::GetConsoleChromeColors(crBack, crText))
 		crDash = CDwmHelper::BlendColors(crBack, crText, 30);
 
 	HBRUSH hBr = CreateSolidBrush(crBack);
@@ -501,8 +495,6 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= nullptr*/)
 
 	LOGFONT lf = {};
 	lf.lfWeight = FW_DONTCARE;
-	if (gpConEmu->IsWindowBackdropActive())
-		lf.lfQuality = ANTIALIASED_QUALITY;
 	lf.lfCharSet = gpSet->nStatusFontCharSet;
 	lf.lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
 	wcscpy_c(lf.lfFaceName, gpSet->sStatusFontFace);

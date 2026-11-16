@@ -156,7 +156,6 @@ protected:
 		DP_PROP(bool, Inverse)          // 7
 		DP_PROP(bool, Crossed)          // 9
 		DP_PROP(bool, BrightFore)       // 90-97
-		DP_PROP(bool, ExplicitBackground); // Background explicitly set by SGR
 		DP_PROP(bool, BrightBack)       // 100-107
 		DP_PROP(int,  TextColor)        // 30-37,38,39
 		DP_PROP(cbit, Text256)          // 38

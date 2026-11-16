@@ -188,8 +188,6 @@
 #define cbHideCaptionAlways             1569
 #define cbTryToCenter                   1570
 #define cbAlwaysOnTop                   1572
-#define lbWindowBackdrop                3801
-#define stWindowBackdrop                3802
 #define cbUserScreenTransparent         1573
 #define cbTransparent                   1574
 #define tBgImageColors                  1575

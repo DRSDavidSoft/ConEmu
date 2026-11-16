@@ -391,7 +391,6 @@ struct Settings
 
 
 		/* *** Transparency *** */
-		BYTE windowBackdrop = 0; // Solid, Mica, Acrylic, Mica Alt
 		bool isTransparentAllowed();
 		//reg->Load(L"AlphaValue", nTransparent);
 		uint8_t nTransparent;

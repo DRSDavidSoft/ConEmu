@@ -1070,6 +1070,15 @@ LRESULT CConEmuChild::OnPaintGaps(HDC hdc)
 		return 0;
 	}
 
+	int nColorIdx = RELEASEDEBUGTEST(0/*Black*/,1/*Blue*/);
+	const auto& clrPalette = VCon->GetColors();
+
+	CRealConsole* pRCon = VCon->RCon();
+	if (pRCon)
+	{
+		nColorIdx = pRCon->GetDefaultBackColorIdx();
+	}
+
 	#ifdef _DEBUG
 	wchar_t szPos[80]; RECT rcScreen = {}; GetWindowRect(mh_WndBack, &rcScreen);
 	swprintf_c(szPos, L"PaintGaps VCon[%i] at {%i,%i}-{%i,%i} screen coords", mp_VCon->Index(), LOGRECTCOORDS(rcScreen));
@@ -1094,8 +1103,7 @@ LRESULT CConEmuChild::OnPaintGaps(HDC hdc)
 		BeginPaint(mh_WndBack, &ps);
 	}
 
-	VCon->GetColors();
-	const auto clrBack = VCon->GetTerminalBackground();
+	const auto clrBack = clrPalette[nColorIdx];
 	if (VCon->drawImage)
 	{
 		RECT rcPaint = {};
@@ -1125,8 +1133,7 @@ LRESULT CConEmuChild::OnPaintGaps(HDC hdc)
 	{
 		if (!hdc)
 		{
-			if (!VCon->PaintTerminalBackdropPadding(ps.hdc, ps.rcPaint))
-				FillRect(ps.hdc, &ps.rcPaint, hBrush);
+			FillRect(ps.hdc, &ps.rcPaint, hBrush);
 		}
 		else
 		{

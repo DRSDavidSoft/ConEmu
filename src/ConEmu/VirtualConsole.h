@@ -266,10 +266,6 @@ class CVirtualConsole :
 		void PaintBackgroundImage(HDC hdc, const RECT& rcText, const COLORREF crBack, bool Background = false);
 		bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 		//bool GetCharAttr(wchar_t ch, WORD atr, wchar_t& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);
-		bool SupportsTerminalBackdrop() const;
-		bool UsesTerminalBackdrop() const;
-		COLORREF GetTerminalBackground() const;
-		bool PaintTerminalBackdropPadding(HDC dc, const RECT& rect) const;
 		const ConEmu::PaletteColors& GetColors();
 		ConEmu::PaletteColors GetColors(bool bFade);
 		int GetPaletteIndex();
@@ -346,6 +342,7 @@ class CVirtualConsole :
 		bool CheckChangedTextAttr();
 		bool CheckTransparentRgn(bool abHasChildWindows);
 		MSection csCON;
+		int mn_BackColorIdx; //==0
 		typedef struct tag_PARTBRUSHES
 		{
 			wchar_t ch; // 0x2591 0x2592 0x2593 0x2588 - по увеличению плотности
