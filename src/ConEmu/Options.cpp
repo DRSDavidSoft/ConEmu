@@ -590,6 +590,7 @@ void Settings::InitSettings()
 //------------------------------------------------------------------------
 ///| Default settings |///////////////////////////////////////////////////
 //------------------------------------------------------------------------
+	nTheme = theme_Auto;
 	isShowBgImage = 0;
 	wcscpy_c(sBgImage, L"c:\\back.bmp");
 	bgImageDarker = 255; // 0x46;
@@ -795,6 +796,7 @@ void Settings::InitSettings()
 	bShowFarWindows = true;
 	isRSelFix = true; isMouseSkipActivation = true; isMouseSkipMoving = true;
 	isMouseDragWindow = true;
+	isFarWheelScrollback = false;
 	isFarHourglass = true; nFarHourglassDelay = 2000;
 	isDisableFarFlashing = false; isDisableAllFlashing = false;
 	isDragEnabled = DRAG_L_ALLOWED; isDropEnabled = (BYTE)1; isDefCopy = true; isDropUseMenu = 2;
@@ -2836,6 +2838,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"MouseSkipActivation", isMouseSkipActivation);
 		reg->Load(L"MouseSkipMoving", isMouseSkipMoving);
 		reg->Load(L"MouseDragWindow", isMouseDragWindow);
+		reg->Load(L"FarWheelScrollback", isFarWheelScrollback);
 		reg->Load(L"FarHourglass", isFarHourglass);
 		reg->Load(L"FarHourglassDelay", nFarHourglassDelay);
 
@@ -3026,6 +3029,9 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"Update.DownloadPath", &UpdSet.szUpdateDownloadPath);
 		reg->Load(L"Update.LeavePackages", UpdSet.isUpdateLeavePackages);
 		reg->Load(L"Update.PostUpdateCmd", &UpdSet.szUpdatePostUpdateCmd);
+
+		reg->Load(L"Theme", nTheme);
+		if (nTheme > theme_Light) nTheme = theme_Auto;
 
 		/* *** Notification *** */
 		reg->Load(L"Notification.StopBuzzingDate", StopBuzzingDate, countof(StopBuzzingDate));
@@ -3825,6 +3831,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"MouseSkipActivation", isMouseSkipActivation);
 		reg->Save(L"MouseSkipMoving", isMouseSkipMoving);
 		reg->Save(L"MouseDragWindow", isMouseDragWindow);
+		reg->Save(L"FarWheelScrollback", isFarWheelScrollback);
 		reg->Save(L"FarHourglass", isFarHourglass);
 		reg->Save(L"FarHourglassDelay", nFarHourglassDelay);
 		reg->Save(L"Dnd", isDragEnabled);
@@ -3942,6 +3949,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"Update.DownloadPath", UpdSet.szUpdateDownloadPath);
 		reg->Save(L"Update.LeavePackages", UpdSet.isUpdateLeavePackages);
 		reg->Save(L"Update.PostUpdateCmd", UpdSet.szUpdatePostUpdateCmd);
+		reg->Save(L"Theme", nTheme);
 
 		/* Done */
 		reg->CloseKey();

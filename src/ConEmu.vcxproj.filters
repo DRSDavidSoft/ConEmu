@@ -102,6 +102,12 @@
     <ClInclude Include="ConEmu\DwmApi_Part.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmu\DarkMode.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\IatHook.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmu\DwmHelper.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -795,9 +801,6 @@
     <ClInclude Include="common\xmllite.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="ConEmu\DarkMode.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ConEmu\AboutDlg.cpp">
@@ -864,6 +867,9 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\DragDropData.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\DarkMode.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\DwmHelper.cpp">
@@ -1208,7 +1214,6 @@
     <ClCompile Include="ConEmu\helper.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="ConEmu\IatHook.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Release\ConEmu\ConEmu.l10n">

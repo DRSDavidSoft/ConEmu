@@ -179,6 +179,7 @@
 #define IDC_CONSOLE_STATES              1560
 #define cbFARuseASCIIsort               1561
 #define cbFixAltOnAltTab                1562
+#define cbFarWheelScrollback            3998
 #define cbFarHourglass                  1563
 #define slTransparent                   1564
 #define cbHideCaption                   1565
@@ -504,6 +505,10 @@
 #define cbComspecTest                   2162
 #define gbFeatureMisc                   2163
 #define gbFeatureAppear                 2164
+#define gbTheme                         3113
+#define rbThemeDark                     3114
+#define rbThemeLight                    3115
+#define rbThemeAuto                     3116
 #define gbFeatureCaption                2165
 #define gbFeatureClipboard              2166
 #define cbClipConfirmEnter              2171
@@ -1361,7 +1366,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        248
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3113
+#define _APS_NEXT_CONTROL_VALUE         3117
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

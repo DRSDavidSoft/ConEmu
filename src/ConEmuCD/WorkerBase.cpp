@@ -1069,7 +1069,7 @@ int WorkerBase::SetDebuggingPid(const wchar_t* const pidList)
 	{
 		dbgInfo->bDebugMultiProcess = TRUE;
 		dbgInfo->pDebugAttachProcesses = new MArray<DWORD>;
-		while (pszEnd && (*pszEnd == L',') && *(pszEnd + 1))
+		while (*pszEnd == L',' && pszEnd[1])
 		{
 			DWORD nPID = wcstoul(pszEnd + 1, &pszEnd, 10);
 			if (nPID != 0)

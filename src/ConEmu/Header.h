@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/defines.h"
 
-#include <Shlwapi.h>
+#include <shlwapi.h>
 //#include <vector>
 //#if !defined(__GNUC__)
 //#include <crtdbg.h>
@@ -52,7 +52,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MStrDup.h"
 #include "../common/CEStr.h"
 #include "../common/Keyboard.h"
-#include "../ConEmu/DarkMode.h"
 
 #if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
 #define wmemmove_s(d,ds,s,ss) wmemmove(d,s,ss)
@@ -177,7 +176,7 @@ bool LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true)
 //#if !defined(__GNUC__)
 //#pragma warning (disable : 4005)
 //#if !defined(_WIN32_WINNT)
-//#define _WIN32_WINNT 0x0600
+//#define _WIN32_WINNT 0x0502
 //#endif
 //#endif
 

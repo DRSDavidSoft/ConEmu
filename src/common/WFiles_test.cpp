@@ -171,3 +171,14 @@ TEST(WFiles, ReadUtf16LeWithBom)
 	EXPECT_EQ(read.GetLen(), 6);
 	EXPECT_STREQ(read.c_str(), expected);
 }
+
+TEST(WFiles, RejectIncompleteUtf16LeCodeUnit)
+{
+	constexpr char bytes[] = { '\xFF', '\xFE', 'A' };
+	auto tempFile = WriteBinary(GetTestFileName(), bytes, countof(bytes));
+	tempFile.CloseFile();
+
+	CEStr read;
+	DWORD size = 0, error = 0;
+	EXPECT_EQ(ReadTextFile(tempFile.GetFilePath(), (1 << 20), read, size, error), -7);
+}

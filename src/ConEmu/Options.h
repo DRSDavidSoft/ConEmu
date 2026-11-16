@@ -35,6 +35,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MIN_INACTIVE_ALPHA_VALUE 0
 #define MAX_ALPHA_VALUE 255
 
+enum ThemeMode : BYTE
+{
+	theme_Auto = 0,
+	theme_Dark = 1,
+	theme_Light = 2,
+};
+
 //TODO: #define MAX_FONT_GROUPS 20 // Main, Borders, Japan, Cyrillic, ...
 // #define MAX_FONT_STYLES 8 //normal/(bold|italic|underline)
 enum CEFontStyles
@@ -552,6 +559,7 @@ struct Settings
 		bool isMouseDragWindow;
 		//reg->Load(L"FarHourglass", isFarHourglass);
 		bool isFarHourglass;
+		bool isFarWheelScrollback; // Handle hidden-panel wheel in the GUI, without a Far macro
 		//reg->Load(L"FarHourglassDelay", nFarHourglassDelay);
 		UINT nFarHourglassDelay;
 		//reg->Load(L"DisableFarFlashing", isDisableFarFlashing); if (isDisableFarFlashing>2) isDisableFarFlashing = 2;
@@ -865,6 +873,7 @@ struct Settings
 		UINT nScrollBarAppearDelay;
 		//reg->Load(L"ScrollBarDisappearDelay", nScrollBarDisappearDelay);
 		UINT nScrollBarDisappearDelay;
+		BYTE nTheme; // ThemeMode
 
 		////reg->Load(L"TabMargins", rcTabMargins);
 		//RECT rcTabMargins;
