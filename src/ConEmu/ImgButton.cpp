@@ -173,6 +173,10 @@ bool CImgButtons::Process(HWND ahDlg, UINT messg, WPARAM wParam, LPARAM lParam, 
 {
 	switch (messg)
 	{
+	case WM_THEMECHANGED:
+		DarkMode::ApplyTooltip(hwndTip);
+		break;
+
 	case WM_SETCURSOR:
 		{
 			LONG_PTR lID = GetWindowLongPtr((HWND)wParam, GWLP_ID);
