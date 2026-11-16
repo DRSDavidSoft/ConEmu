@@ -534,53 +534,53 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	Add(vkWndDragKey,      chk_Modifier2,L"WndDragKey",  CConEmuCtrl::key_WinDragStart) // modifier to drag ConEmu by any place in the window
 		.SetHotKey(VK_LBUTTON,VK_CONTROL,VK_MENU).SetEnabled(ConEmuHotKey::UseWndDragKey);
 	/*
-		*** System (predefined, fixed)
+		*** System actions
 	*/
-	Add(vkWinAltA,         chk_System, L""             ).SetMacro(L"About()")               // Show ‘About’ dialog
+	Add(vkWinAltA,         chk_System, L"System.About").SetMacro(L"About()")               // Show ‘About’ dialog
 		.SetHotKey('A',VK_LWIN,VK_MENU).SetOnKeyUp();
-	Add(vkWinAltP,         chk_System, L""             ).SetMacro(L"Settings()")            // Settings dialog
+	Add(vkWinAltP,         chk_System, L"System.Settings").SetMacro(L"Settings()")            // Settings dialog
 		.SetHotKey('P',VK_LWIN,VK_MENU).SetOnKeyUp();
-	Add(vkWinAltK,         chk_System, L""             ).SetMacro(L"Settings(171)")         // Setup ‘Hotkeys’
+	Add(vkWinAltK,         chk_System, L"System.Hotkeys").SetMacro(L"Settings(171)")         // Setup ‘Hotkeys’
 		.SetHotKey('K',VK_LWIN,VK_MENU).SetOnKeyUp();
-	Add(vkWinAltT,         chk_System, L""             ).SetMacro(L"Settings(157)")         // Setup ‘Tasks’
+	Add(vkWinAltT,         chk_System, L"System.Tasks").SetMacro(L"Settings(157)")         // Setup ‘Tasks’
 		.SetHotKey('T',VK_LWIN,VK_MENU).SetOnKeyUp();
-	Add(vkWinAltH,         chk_System, L""             ).SetMacro(L"Wiki()")                // Show online wiki
+	Add(vkWinAltH,         chk_System, L"System.Wiki").SetMacro(L"Wiki()")                // Show online wiki
 		.SetHotKey('H',VK_LWIN,VK_MENU).SetOnKeyUp();
-	Add(vkWinAltSpace,     chk_System, L"",              CConEmuCtrl::key_SystemMenu)       // Show ConEmu menu
+	Add(vkWinAltSpace,     chk_System, L"System.Menu",          CConEmuCtrl::key_SystemMenu)       // Show ConEmu menu
 		.SetHotKey(VK_SPACE,VK_LWIN,VK_MENU).SetOnKeyUp();
-	Add(vkCtrlWinAltSpace, chk_System, L"",              CConEmuCtrl::key_ShowRealConsole)  // Show real console
+	Add(vkCtrlWinAltSpace, chk_System, L"System.ShowRealConsole", CConEmuCtrl::key_ShowRealConsole)  // Show real console
 		.SetHotKey(VK_SPACE, VK_CONTROL,VK_LWIN,VK_MENU);
-	Add(vkCtrlWinEnter,    chk_System, L""             ).SetMacro(L"WindowFullscreen()")
+	Add(vkCtrlWinEnter,    chk_System, L"System.Fullscreen").SetMacro(L"WindowFullscreen()")
 		.SetHotKey(VK_RETURN,VK_LWIN,VK_CONTROL);
-	Add(vkCtrlTab,         chk_System, L"",              CConEmuCtrl::key_CtrlTab)          // Tab switch
+	Add(vkCtrlTab,         chk_System, L"System.NextTab",       CConEmuCtrl::key_CtrlTab)          // Tab switch
 		.SetHotKey(VK_TAB,VK_CONTROL).SetEnabled(ConEmuHotKey::UseCtrlTab);
-	Add(vkCtrlShiftTab,    chk_System, L"",              CConEmuCtrl::key_CtrlShiftTab)     // Tab switch
+	Add(vkCtrlShiftTab,    chk_System, L"System.PreviousTab",   CConEmuCtrl::key_CtrlShiftTab)     // Tab switch
 		.SetHotKey(VK_TAB,VK_CONTROL,VK_SHIFT).SetEnabled(ConEmuHotKey::UseCtrlTab);
-	Add(vkCtrlTab_Left,    chk_System, L"",              CConEmuCtrl::key_CtrlTab_Prev)     // Tab switch
+	Add(vkCtrlTab_Left,    chk_System, L"System.TabLeft",       CConEmuCtrl::key_CtrlTab_Prev)     // Tab switch
 		.SetHotKey(VK_LEFT,VK_CONTROL);
-	Add(vkCtrlTab_Up,      chk_System, L"",              CConEmuCtrl::key_CtrlTab_Prev)     // Tab switch
+	Add(vkCtrlTab_Up,      chk_System, L"System.TabUp",         CConEmuCtrl::key_CtrlTab_Prev)     // Tab switch
 		.SetHotKey(VK_UP,VK_CONTROL);
-	Add(vkCtrlTab_Right,   chk_System, L"",              CConEmuCtrl::key_CtrlTab_Next)     // Tab switch
+	Add(vkCtrlTab_Right,   chk_System, L"System.TabRight",      CConEmuCtrl::key_CtrlTab_Next)     // Tab switch
 		.SetHotKey(VK_RIGHT,VK_CONTROL);
-	Add(vkCtrlTab_Down,    chk_System, L"",              CConEmuCtrl::key_CtrlTab_Next)     // Tab switch
+	Add(vkCtrlTab_Down,    chk_System, L"System.TabDown",       CConEmuCtrl::key_CtrlTab_Next)     // Tab switch
 		.SetHotKey(VK_DOWN,VK_CONTROL);
-	Add(vkEscNoConsoles,   chk_System, L"",              CConEmuCtrl::key_MinimizeByEsc)    // Minimize ConEmu by Esc when no open consoles left
+	Add(vkEscNoConsoles,   chk_System, L"System.Minimize",      CConEmuCtrl::key_MinimizeByEsc)    // Minimize ConEmu by Esc when no open consoles left
 		.SetHotKey(VK_ESCAPE);
-	Add(vkCTSShiftLeft,    chk_System, L""             ).SetMacro(L"Select(0,-1)")
+	Add(vkCTSShiftLeft,    chk_System, L"System.SelectLeft").SetMacro(L"Select(0,-1)")
 		.SetHotKey(VK_LEFT,VK_SHIFT).SetEnabled(ConEmuHotKey::UseCTSShiftArrow);
-	Add(vkCTSShiftRight,   chk_System, L""             ).SetMacro(L"Select(0,1)")
+	Add(vkCTSShiftRight,   chk_System, L"System.SelectRight").SetMacro(L"Select(0,1)")
 		.SetHotKey(VK_RIGHT,VK_SHIFT).SetEnabled(ConEmuHotKey::UseCTSShiftArrow);
-	Add(vkCTSCtrlShiftLeft,chk_System, L""             ).SetMacro(L"Select(0,-1,0,-2)")
+	Add(vkCTSCtrlShiftLeft,chk_System, L"System.SelectWordLeft").SetMacro(L"Select(0,-1,0,-2)")
 		.SetHotKey(VK_LEFT,VK_CONTROL,VK_SHIFT).SetEnabled(ConEmuHotKey::UseCTSShiftArrow);
-	Add(vkCTSCtrlShiftRight,chk_System, L""            ).SetMacro(L"Select(0,1,0,2)")
+	Add(vkCTSCtrlShiftRight,chk_System, L"System.SelectWordRight").SetMacro(L"Select(0,1,0,2)")
 		.SetHotKey(VK_RIGHT,VK_CONTROL,VK_SHIFT).SetEnabled(ConEmuHotKey::UseCTSShiftArrow);
-	Add(vkCTSShiftHome,    chk_System, L""             ).SetMacro(L"Select(0,-1,0,-1)")
+	Add(vkCTSShiftHome,    chk_System, L"System.SelectToStart").SetMacro(L"Select(0,-1,0,-1)")
 		.SetHotKey(VK_HOME,VK_SHIFT).SetEnabled(ConEmuHotKey::UseCTSShiftArrow);
-	Add(vkCTSShiftEnd,     chk_System, L""             ).SetMacro(L"Select(0,1,0,1)")
+	Add(vkCTSShiftEnd,     chk_System, L"System.SelectToEnd").SetMacro(L"Select(0,1,0,1)")
 		.SetHotKey(VK_END,VK_SHIFT).SetEnabled(ConEmuHotKey::UseCTSShiftArrow);
-	Add(vkCTSShiftUp,      chk_System, L""             ).SetMacro(L"Select(1,0,-1)")
+	Add(vkCTSShiftUp,      chk_System, L"System.SelectUp").SetMacro(L"Select(1,0,-1)")
 		.SetHotKey(VK_UP,VK_SHIFT).SetEnabled(ConEmuHotKey::UseCTSShiftArrow);
-	Add(vkCTSShiftDown,    chk_System, L""             ).SetMacro(L"Select(1,0,1)")
+	Add(vkCTSShiftDown,    chk_System, L"System.SelectDown").SetMacro(L"Select(1,0,1)")
 		.SetHotKey(VK_DOWN,VK_SHIFT).SetEnabled(ConEmuHotKey::UseCTSShiftArrow);
 	/*
 		*** [HostKey]+Arrows. Only [HostKey] (modifiers actually) can be configured

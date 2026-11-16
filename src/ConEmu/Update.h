@@ -141,6 +141,8 @@ public:
 		ExitAndUpdate,
 	};
 	UpdateStep InUpdate();
+	void CancelPendingForkUpdate();
+	void LaunchPendingForkUpdate();
 
 	short GetUpdateProgress();
 
@@ -158,6 +160,7 @@ protected:
 	wchar_t ms_CurVerInfo[100] = L"";  // Version + stable/preview/alpha
 	wchar_t ms_DefaultTitle[128] = L"";
 	CEStr msz_ConfirmSource;
+	CEStr msz_PendingForkUpdateRoot, msz_PendingForkUpdateExe;
 	
 	void RequestTerminate();
 	static LRESULT QueryConfirmationCallback(LPARAM lParam);

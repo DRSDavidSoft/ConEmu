@@ -785,73 +785,52 @@ bool CConEmuCtrl::key_BufferScrollPgDn(const ConEmuChord& VkState, bool TestOnly
 	return key_BufferScroll(TestOnly, VK_NEXT, pRCon);
 }
 
-// pRCon may be nullptr
-bool CConEmuCtrl::key_CtrlTab(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+// Keep the preview open while Ctrl is held. Chords without Ctrl commit at once.
+void CConEmuCtrl::SwitchTabByHotkey(const ConEmuChord& chord, bool forward)
+{
+	gpConEmu->mp_TabBar->Switch(forward);
+	if (gpSet->isTabLazy || gpSet->isTabRecent)
+	{
+		if (chord.Mod & cvk_Ctrl)
+			gpConEmu->mb_InCtrlTabSwitch = TRUE;
+		else
+			gpConEmu->mp_TabBar->SwitchCommit();
+	}
+}
+
+bool CConEmuCtrl::key_CtrlTab(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey*, CRealConsole*)
 {
 	if (!gpSet->isTabSelf)
 		return false;
-
-	if (TestOnly)
-		return true;
-
-	//WARNING! Must be System Unchanged HOTKEY
-	//WARNING! Функция зовет isPressed(VK_SHIFT)
-	WARNING("CConEmuCtrl:: Переделать на явный вызов SwitchNext, учесть, что он может быть альтернативным!");
-	gpConEmu->mp_TabBar->OnKeyboard(WM_KEYDOWN, VK_TAB, 0);
-	if (gpSet->isTabLazy || gpSet->isTabRecent)
-		gpConEmu->mb_InCtrlTabSwitch = TRUE;
+	if (!TestOnly)
+		SwitchTabByHotkey(VkState, true);
 	return true;
 }
 
-// pRCon may be nullptr
-bool CConEmuCtrl::key_CtrlShiftTab(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_CtrlShiftTab(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey*, CRealConsole*)
 {
 	if (!gpSet->isTabSelf)
 		return false;
-
-	if (TestOnly)
-		return true;
-
-	//WARNING! Must be System Unchanged HOTKEY
-	//WARNING! Функция зовет isPressed(VK_SHIFT)
-	WARNING("CConEmuCtrl:: Переделать на явный вызов SwitchPrev, учесть, что он может быть альтернативным!");
-	gpConEmu->mp_TabBar->OnKeyboard(WM_KEYDOWN, VK_TAB, 0);
-	if (gpSet->isTabLazy || gpSet->isTabRecent)
-		gpConEmu->mb_InCtrlTabSwitch = TRUE;
+	if (!TestOnly)
+		SwitchTabByHotkey(VkState, false);
 	return true;
 }
 
-// pRCon may be nullptr
-bool CConEmuCtrl::key_CtrlTab_Prev(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_CtrlTab_Prev(const ConEmuChord&, bool TestOnly, const ConEmuHotKey*, CRealConsole*)
 {
 	if (!gpSet->isTabSelf || !gpConEmu->mp_TabBar->IsInSwitch())
 		return false;
-
-	if (TestOnly)
-		return true;
-
-	//WARNING! Must be System Unchanged HOTKEY
-	//WARNING! Функция зовет isPressed(VK_SHIFT)
-	WARNING("CConEmuCtrl:: Переделать на явный вызов Switch, учесть, что он может быть альтернативным!");
-	if (!gpConEmu->mp_TabBar->OnKeyboard(WM_KEYDOWN, VkState.Vk, 0))
-		return false;
+	if (!TestOnly)
+		gpConEmu->mp_TabBar->SwitchByPosition(false);
 	return true;
 }
 
-// pRCon may be nullptr
-bool CConEmuCtrl::key_CtrlTab_Next(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_CtrlTab_Next(const ConEmuChord&, bool TestOnly, const ConEmuHotKey*, CRealConsole*)
 {
 	if (!gpSet->isTabSelf || !gpConEmu->mp_TabBar->IsInSwitch())
 		return false;
-
-	if (TestOnly)
-		return true;
-
-	//WARNING! Must be System Unchanged HOTKEY
-	//WARNING! Функция зовет isPressed(VK_SHIFT)
-	WARNING("CConEmuCtrl:: Переделать на явный вызов Switch, учесть, что он может быть альтернативным!");
-	if (!gpConEmu->mp_TabBar->OnKeyboard(WM_KEYDOWN, VkState.Vk, 0))
-		return false;
+	if (!TestOnly)
+		gpConEmu->mp_TabBar->SwitchByPosition(true);
 	return true;
 }
 

@@ -234,6 +234,9 @@ enum LngResources
 	lng_ConfirmCloseBtnAll        = 203,
 	lng_ConfirmCloseBtnConsoles   = 204,
 	lng_ConfirmCloseBtnConsole    = 205,
+	lng_HotkeyChooseModifier      = 206,
+	lng_HotkeyChooseModifiers     = 207,
+	lng_HotkeyGuiMacro            = 208,
 	// last auto-gen identifier
 	lng_NextId
 };

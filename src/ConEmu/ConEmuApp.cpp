@@ -3027,6 +3027,9 @@ done:
 	//if (FontFilePrm) RemoveFontResourceEx(FontFile, FR_PRIVATE, nullptr); //ADD fontname; by Mors
 	gpFontMgr->UnregisterFonts();
 
+	if (gpUpd)
+		gpUpd->LaunchPendingForkUpdate();
+
 	//CoUninitialize();
 	OleUninitialize();
 

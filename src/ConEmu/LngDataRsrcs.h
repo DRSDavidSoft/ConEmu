@@ -233,5 +233,8 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_UnknownSwitch4,           L"Switch ‘-new_console’ must be specified *after* ‘-cmd’ or ‘-cmdlist’!" },
 	{ lng_UpdateCloseMsg1,          L"Please, close all ConEmu instances before continuing" },
 	{ lng_UpdateCloseMsg2,          L"ConEmu still running:" },
+	{ lng_HotkeyChooseModifier,      L"Choose modifier:" },
+	{ lng_HotkeyChooseModifiers,     L"Choose modifiers:" },
+	{ lng_HotkeyGuiMacro,            L"GUI Macro:" },
 	{ /* empty trailing item for patch convenience */ }
 };

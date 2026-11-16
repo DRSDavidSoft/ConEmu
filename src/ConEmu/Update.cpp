@@ -252,6 +252,7 @@ void CConEmuUpdate::StopChecking()
 		}
 	}
 
+	CancelPendingForkUpdate();
 	DeleteBadTempFiles();
 	m_UpdateStep = UpdateStep::NotStarted;
 
@@ -736,10 +737,13 @@ DWORD CConEmuUpdate::CheckProcInt()
 
 		if (mp_Set->UsesForkUpdateFeed())
 		{
-			if (gpConEmu)
-				gpConEmu->CallMainThread(true, QueryConfirmationCallback, static_cast<LPARAM>(UpdateStep::ConfirmDownload));
-			wcscpy_c(ms_SkipVersion, ms_NewVersion);
-			m_UpdateStep = UpdateStep::NotStarted;
+			const bool pending = gpConEmu
+				&& gpConEmu->CallMainThread(true, QueryConfirmationCallback, static_cast<LPARAM>(UpdateStep::ConfirmDownload));
+			if (!pending)
+			{
+				wcscpy_c(ms_SkipVersion, ms_NewVersion);
+				m_UpdateStep = UpdateStep::NotStarted;
+			}
 			Inet.Deinit(true);
 			mb_InCheckProcedure = FALSE;
 			return 0;
@@ -1732,7 +1736,7 @@ int CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 				else
 				{
 #if defined(CONEMU_ARM64_HOOKS) || defined(_M_IX86) || defined(_M_X64) || defined(__i386__) || defined(__x86_64__)
-					const CEStr prompt(message, L"\n\nInstall the update after closing Far and ConEmu?");
+					const CEStr prompt(message, L"\n\nClose Far and ConEmu and install the update?");
 					if (MsgBox(prompt, MB_ICONINFORMATION | MB_YESNO | MB_DEFBUTTON2, ms_DefaultTitle) == IDYES)
 					{
 						wchar_t systemPath[MAX_PATH]{};
@@ -1743,27 +1747,18 @@ int CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 							MsgBox(L"The bundled updater or Windows PowerShell is missing.", MB_ICONERROR, ms_DefaultTitle);
 							break;
 						}
-						if (bNeedRunElevation)
+						const CEStr powershell(systemPath, L"\\WindowsPowerShell\\v1.0\\powershell.exe");
+						if (!FileExists(powershell))
 						{
-							MsgBox(L"Start ConEmu as administrator to update this protected installation.", MB_ICONINFORMATION, ms_DefaultTitle);
+							MsgBox(L"Windows PowerShell is missing.", MB_ICONERROR, ms_DefaultTitle);
 							break;
 						}
-						wchar_t pid[16]{};
-						swprintf_c(pid, L"%u", GetCurrentProcessId());
-						const CEStr powershell(systemPath, L"\\WindowsPowerShell\\v1.0\\powershell.exe");
-#ifdef CONEMU_ARM64_HOOKS
-						const auto architecture = L"arm64";
-#else
-						const auto architecture = WIN3264TEST(L"x86", L"x64");
-#endif
-						const CEStr arguments(L"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"", script,
-							L"\" -Architecture ", architecture, L" -Version ", ms_NewVersion, L" -WaitForPid ", pid);
-						const auto result = reinterpret_cast<INT_PTR>(ShellExecute(ghWnd, L"open", powershell,
-							arguments, gpConEmu->ms_ConEmuExeDir, SW_HIDE));
-						if (result > 32)
-							gpConEmu->PostScClose();
-						else
-							MsgBox(L"Windows could not start the updater.", MB_ICONERROR, ms_DefaultTitle);
+
+						msz_PendingForkUpdateRoot.Set(gpConEmu->ms_ConEmuExeDir);
+						msz_PendingForkUpdateExe.Set(powershell);
+						m_UpdateStep = UpdateStep::ExitAndUpdate;
+						gpConEmu->PostScClose();
+						lRc = TRUE;
 					}
 #else
 					const CEStr prompt(message, L"\n\nOpen the releases page?\n", gsDownlPage);
@@ -1821,6 +1816,50 @@ int CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 	}
 
 	return lRc;
+}
+
+void CConEmuUpdate::CancelPendingForkUpdate()
+{
+	if (msz_PendingForkUpdateRoot.IsEmpty())
+		return;
+	msz_PendingForkUpdateRoot.Clear();
+	msz_PendingForkUpdateExe.Clear();
+	m_UpdateStep = UpdateStep::NotStarted;
+}
+
+void CConEmuUpdate::LaunchPendingForkUpdate()
+{
+#if defined(CONEMU_ARM64_HOOKS) || defined(_M_IX86) || defined(_M_X64) || defined(__i386__) || defined(__x86_64__)
+	if (m_UpdateStep != UpdateStep::ExitAndUpdate || msz_PendingForkUpdateRoot.IsEmpty())
+		return;
+
+#ifdef CONEMU_ARM64_HOOKS
+	const auto architecture = L"arm64";
+#else
+	const auto architecture = WIN3264TEST(L"x86", L"x64");
+#endif
+	wchar_t pid[16]{};
+	swprintf_c(pid, L"%u", GetCurrentProcessId());
+	const CEStr script(msz_PendingForkUpdateRoot, L"\\ConEmu\\Scripts\\ForkUpdate.ps1");
+	const CEStr arguments(L"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"", script,
+		L"\" -Architecture ", architecture, L" -Version ", ms_NewVersion, L" -WaitForPid ", pid);
+	SHELLEXECUTEINFO execute{sizeof(execute)};
+	execute.fMask = SEE_MASK_NOASYNC | SEE_MASK_FLAG_NO_UI;
+	execute.lpVerb = bNeedRunElevation ? L"runas" : L"open";
+	execute.lpFile = msz_PendingForkUpdateExe;
+	execute.lpParameters = arguments;
+	execute.lpDirectory = msz_PendingForkUpdateRoot;
+	execute.nShow = SW_HIDE;
+	if (!ShellExecuteEx(&execute))
+	{
+		const auto error = GetLastError();
+		if (error == ERROR_CANCELLED)
+			MsgBox(L"The update was cancelled. You can start ConEmu and try again.",
+				MB_ICONINFORMATION | MB_SYSTEMMODAL, ms_DefaultTitle, nullptr, false);
+		else
+			DisplayLastError(L"Windows could not start the updater.", error);
+	}
+#endif
 }
 
 int CConEmuUpdate::QueryConfirmationDownload()

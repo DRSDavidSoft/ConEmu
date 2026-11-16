@@ -5968,7 +5968,6 @@ void Settings::LoadHotkeys(SettingsBase* reg, const bool& bSendAltEnter, const b
 
 		_ASSERTE(ppHK->HkType != chk_NumHost);
 		_ASSERTE(ppHK->HkType != chk_ArrHost);
-		_ASSERTE(ppHK->HkType != chk_System);
 
 		DWORD VkMod = ppHK->GetVkMod();
 		if (reg->Load(ppHK->Name, VkMod))

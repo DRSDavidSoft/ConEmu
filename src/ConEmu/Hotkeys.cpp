@@ -56,8 +56,7 @@ ConEmuHotKey& ConEmuHotKey::SetVkMod(DWORD VkMod)
 
 bool ConEmuHotKey::CanChangeVK() const
 {
-	//chk_System - пока не настраивается
-	return (HkType==chk_User || HkType==chk_Global || HkType==chk_Local || HkType==chk_Macro || HkType==chk_Task);
+	return (HkType==chk_User || HkType==chk_Global || HkType==chk_Local || HkType==chk_Macro || HkType==chk_Task || HkType==chk_System);
 }
 
 bool ConEmuHotKey::IsTaskHotKey() const

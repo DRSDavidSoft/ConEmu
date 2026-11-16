@@ -46,7 +46,7 @@ enum ConEmuHotKeyType
 	chk_Modifier2, // e.g. for dragging when you need more than one modifier
 	chk_NumHost,   // system hotkey (<HostKey>-Number, and previously WAS <HostKey>-Arrows)
 	chk_ArrHost,   // system hotkey (<HostKey>-Number, and previously WAS <HostKey>-Arrows)
-	chk_System,    // predefined hotkeys, not configurable yet
+	chk_System,    // predefined actions with configurable hotkeys
 	chk_Global,    // globally registered hotkey
 	chk_Local,     // locally registered hotkey
 	chk_Macro,     // GUI Macro

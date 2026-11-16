@@ -180,7 +180,7 @@ class CTabBarClass
 		void OnChooseTabPopup();
 		void OnCommand(WPARAM wParam, LPARAM lParam);
 		void OnConsoleActivated(int nConNumber); //0-based
-		bool OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam);
+		void SwitchByPosition(bool forward);
 		bool OnNotify(LPNMHDR nmhdr, LRESULT& lResult);
 		void OnShowButtonsChanged();
 		bool OnTimer(WPARAM wParam);
