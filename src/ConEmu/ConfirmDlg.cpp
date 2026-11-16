@@ -96,7 +96,7 @@ static HRESULT CALLBACK TaskDialogCaptionCallback(HWND hwnd, UINT notification, 
 {
 	const auto& context = *reinterpret_cast<const TaskDialogCaptionContext*>(data);
 	if (notification == TDN_CREATED)
-		gpConEmu->EnableDarkCaption(hwnd);
+		gpConEmu->SetDarkCaption(hwnd);
 	return context.callback(hwnd, notification, wParam, lParam, context.data);
 }
 
@@ -163,7 +163,7 @@ INT_PTR CALLBACK DarkCloseDialogProc(HWND dialog, UINT msg, WPARAM wParam, LPARA
 		const auto& config = state.config;
 		TaskDlgCallback(dialog, TDN_CREATED, 0, 0, 0);
 		gpConEmu->ApplyPopupMenuTheme(dialog);
-		gpConEmu->EnableDarkCaption(dialog);
+		gpConEmu->SetDarkCaption(dialog);
 		SetWindowText(dialog, config.pszWindowTitle);
 
 		HDC dc = GetDC(dialog);

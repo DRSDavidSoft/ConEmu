@@ -75,7 +75,7 @@ public:
 	static COLORREF WindowsAccentColor();
 	static COLORREF BlendColors(COLORREF base, COLORREF tint, unsigned tintPercent);
 	void ApplyPopupMenuTheme(HWND owner);
-	void EnableDarkCaption(HWND window);
+	void SetDarkCaption(HWND window, bool dark = true);
 	void EnableGlass(bool abGlass);
 	void EnableTheming(bool abTheme);
 	void SetWindowTheme(HWND hWnd, LPCWSTR pszSubAppName, LPCWSTR pszSubIdList);

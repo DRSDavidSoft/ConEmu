@@ -2102,8 +2102,8 @@ void CSettings::ApplySettingsTheme(HWND dialog)
 {
 	gpConEmu->ApplyPopupMenuTheme(dialog);
 	const bool dark = CDwmHelper::IsWindowsDarkMode();
-	if (dark && (GetWindowLongPtr(dialog, GWL_STYLE) & (WS_CHILD | WS_CAPTION)) == WS_CAPTION)
-		gpConEmu->EnableDarkCaption(dialog);
+	if ((GetWindowLongPtr(dialog, GWL_STYLE) & (WS_CHILD | WS_CAPTION)) == WS_CAPTION)
+		gpConEmu->SetDarkCaption(dialog, dark);
 	EnumChildWindows(dialog, ApplySettingsThemeToControl, dark);
 	RedrawWindow(dialog, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
 }

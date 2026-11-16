@@ -217,14 +217,14 @@ bool CDwmHelper::IsWindowsDarkMode()
 		&& light == 0;
 }
 
-void CDwmHelper::EnableDarkCaption(HWND window)
+void CDwmHelper::SetDarkCaption(HWND window, bool dark)
 {
 	if (!dwm._DwmSetWindowAttribute || gOSVer.dwBuildNumber < 22000)
 		return;
 
 	// DWMWA_USE_IMMERSIVE_DARK_MODE is absent from older Windows SDKs.
 	constexpr DWORD immersiveDarkMode = 20;
-	const BOOL enabled = TRUE;
+	const BOOL enabled = dark;
 	dwm._DwmSetWindowAttribute(window, immersiveDarkMode, &enabled, sizeof(enabled));
 }
 

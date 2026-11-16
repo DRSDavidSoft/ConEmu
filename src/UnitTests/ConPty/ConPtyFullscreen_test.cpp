@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 #include <windows.h>
+#include "ConPtyTestConsole.h"
 #include <string>
 #include <vector>
 #include <fstream>
 #include "../../common/ConPtyData.h"
-int wmain(int argc,wchar_t**argv){if(argc!=5)return 2;FreeConsole();if(!AllocConsole())return 3;ShowWindow(GetConsoleWindow(),SW_HIDE);HANDLE out=GetStdHandle(STD_OUTPUT_HANDLE),in=GetStdHandle(STD_INPUT_HANDLE);SMALL_RECT viewport{0,0,79,24};SetConsoleWindowInfo(out,TRUE,&viewport);SetConsoleScreenBufferSize(out,{80,25});
+int RunFullscreenTest(wchar_t **argv){ShowWindow(GetConsoleWindow(),SW_HIDE);HANDLE out=GetStdHandle(STD_OUTPUT_HANDLE),in=GetStdHandle(STD_INPUT_HANDLE);SMALL_RECT viewport{0,0,79,24};SetConsoleWindowInfo(out,TRUE,&viewport);SetConsoleScreenBufferSize(out,{80,25});
  std::wstring prefix=argv[4],file=prefix+L".txt";{std::ofstream f(file.c_str());f<<"FIRST_LINE_CONPTY\nsecond\nEmoji: \xF0\x9F\x91\xA9\xE2\x80\x8D\xF0\x9F\x91\xA7\n";for(int n=4;n<=80;n++)f<<"Line "<<n<<" - full screen sample\n";}
  std::ofstream report((prefix+L".report").c_str());int failures=0;auto check=[&](bool b,const char*n){report<<(b?"PASS ":"FAIL ")<<n<<"\n";report.flush();failures+=!b;};
  auto screen=[&](){CONSOLE_SCREEN_BUFFER_INFO i{};GetConsoleScreenBufferInfo(out,&i);std::vector<wchar_t> chars(i.dwSize.X*i.dwSize.Y);DWORD count;ReadConsoleOutputCharacterW(out,chars.data(),chars.size(),{0,0},&count);return std::wstring(chars.data(),count);};
@@ -19,3 +20,8 @@ int wmain(int argc,wchar_t**argv){if(argc!=5)return 2;FreeConsole();if(!AllocCon
  DWORD wait=WaitForSingleObject(pi.hProcess,15000),code;GetExitCodeProcess(pi.hProcess,&code);if(wait!=WAIT_OBJECT_0)TerminateProcess(pi.hProcess,99);check(wait==WAIT_OBJECT_0&&code==0,"Fullscreen application exits through ConPTY input");check(waitText(L"AFTER_APP")&&screen().find(L"BEFORE_APP")!=std::wstring::npos,"Main screen restored after fullscreen application");
  if(vim){std::ifstream f(file.c_str());std::string text((std::istreambuf_iterator<char>(f)),{});check(text.find("EDITED_second")!=std::string::npos,"Vim edit saved to file");}
  CloseHandle(pi.hProcess);CloseHandle(pi.hThread);return failures?1:0;}
+
+int wmain(int argc, wchar_t **argv)
+{
+    return RunConPtyConsoleTest(argc, argv, 5, RunFullscreenTest);
+}
